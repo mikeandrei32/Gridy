@@ -1,13 +1,67 @@
 # 08 Core Feature Workflows
+
 ## 1. Hybrid Queue Monitoring Workflow
-1.  **Generation:** Resident receives a physical queue slip (e.g., A-125) at the barangay hall [cite: 8].
-2.  **Digitization:** Resident opens the Flutter app and scans the slip's QR code [cite: 8, 11].
-3.  **Polling/WebSockets:** Flutter app begins listening to the `/api/v1/queue/live-status/` endpoint for updates [cite: 8].
-4.  **Advancement:** Admin clicks "Next Queue" on the React dashboard [cite: 8].
-5.  **Notification:** Django updates the database, shifting A-125 to "Ongoing", and fires an FCM notification to the resident: "Please proceed to Counter 1" [cite: 8].
+This workflow coordinates physical ticketing at the barangay hall with digital, real-time status updates on the resident's mobile application.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Resident
+    actor Admin
+    participant Flutter as Flutter Mobile App
+    participant Django as Django DRF Backend
+    participant DB as PostgreSQL Database
+    participant FCM as Firebase Cloud Messaging
+
+    Note over Resident, Django: Step 1: Resident gets physical slip at Hall (e.g., A-125)
+    Resident->>Flutter: Open QR Scanner & Scan physical slip
+    Flutter->>Django: POST /api/v1/queue/ticket/ { "ticket_number": "A-125" }
+    Django->>DB: Save ticket link to Resident Profile
+    Django-->>Flutter: 201 Created (linked successfully)
+    
+    loop Real-Time Polling
+        Flutter->>Django: GET /api/v1/queue/live-status/
+        Django->>DB: Fetch current serving ticket
+        DB-->>Django: Current ticket is A-124
+        Django-->>Flutter: Return live-status (waiting...)
+    end
+    
+    Admin->>Django: POST /api/v1/queue/next/ (Advance queue)
+    Django->>DB: Update A-125 status to "ONGOING"
+    Django->>FCM: Trigger push notification payload
+    FCM->>Flutter: Push Notification: "Please proceed to Counter 1"
+    Flutter->>Resident: Display notification alert & update screen
+```
+
+---
 
 ## 2. Image-Backed Issue Reporting Workflow
-1.  **Capture:** Resident uses Flutter app to take a photo of a barangay issue [cite: 8, 11].
-2.  **Submission:** Flutter compresses the image (e.g., max 2MB) and sends it as `multipart/form-data` [cite: 8].
-3.  **Storage:** Django receives the request, uploads the image to Cloudinary, and saves the text data + image URL to PostgreSQL [cite: 8].
-4.  **Dashboard Alert:** The React dashboard updates its analytics, displaying the new report and rendering the image via the Cloudinary URL [cite: 8].
+This workflow manages camera capture, local device image compression, streaming to the backend, and hosting media in cloud storage.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Resident
+    actor Admin
+    participant Flutter as Flutter Mobile App
+    participant Django as Django DRF Backend
+    participant Cloudinary as Cloudinary CDN
+    participant DB as PostgreSQL Database
+    participant React as React Admin Dashboard
+
+    Resident->>Flutter: Capture photo of local issue
+    Flutter->>Flutter: Compress image to < 2MB limit
+    Flutter->>Django: POST /api/v1/reports/submit/ (multipart/form-data)
+    Django->>Cloudinary: Stream binary upload
+    Cloudinary-->>Django: Return secure asset URL
+    Django->>DB: Insert issue report (title, description, image_url)
+    DB-->>Django: Confirm save
+    Django-->>Flutter: 201 Created
+    
+    Admin->>React: Open reports tab
+    React->>Django: GET /api/v1/reports/
+    Django->>DB: Fetch active reports
+    DB-->>Django: Return reports list
+    Django-->>React: Return JSON (with Cloudinary image_url)
+    React-->>Admin: Render report details with image preview
+```
