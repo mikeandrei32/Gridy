@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-
+    'gridy_auth',
 ]
 
 MIDDLEWARE = [
@@ -150,4 +150,4 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-AUTH_USER_MODEL = 'gridy_auth.User'
+# AUTH_USER_MODEL = 'gridy_auth.User'
