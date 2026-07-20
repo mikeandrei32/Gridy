@@ -150,4 +150,4 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# AUTH_USER_MODEL = 'gridy_auth.User'
+AUTH_USER_MODEL = 'gridy_auth.User'
