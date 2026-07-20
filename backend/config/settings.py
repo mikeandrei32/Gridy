@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 import os
+# pyrefly: ignore [missing-import]
 import environ
 from pathlib import Path
 

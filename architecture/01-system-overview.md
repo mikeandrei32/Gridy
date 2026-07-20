@@ -26,5 +26,3 @@ Following the SDLC approach mandated by the capstone panel, the objectives are:
 - **Target Scope:** The system's usability and utility are evaluated by a minimum of 50 survey respondents (officials and residents) across two case-study environments:
   1.  _Barangay Ibabang Dupay_ (Lucena City)
   2.  _Barangay Daungan_ (Pagbilao, Quezon)
-
-  s
