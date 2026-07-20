@@ -1,24 +1,29 @@
 from rest_framework import serializers
-from .models import User, Resident
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.db import transaction
+from .models import User, Resident
+
 
 class ResidentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resident
         fields = ['full_name', 'birth_date', 'voter_status', 'contact_number']
 
+
 class UserSerializer(serializers.ModelSerializer):
     profile = ResidentSerializer(read_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'email', 'full_name', 'role', 'profile']
+        fields = ['id', 'username', 'email', 'role', 'profile']
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
-        token['full_name'] = user.full_name
+        token['username'] = user.username
+        token['full_name'] = getattr(user.profile, 'full_name', user.username) if hasattr(user, 'profile') else user.username
         token['role'] = user.role
         return token
 
@@ -29,31 +34,26 @@ class RegisterSerializer(serializers.ModelSerializer):
     birth_date = serializers.DateField(write_only=True)
     voter_status = serializers.BooleanField(write_only=True, default=False)
     contact_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    
+
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'full_name', 'birth_date', 'voter_status', 'contact_number']
 
-        def create(self, validated_data):
-            profile_data = {
-                'full_name': validated_data.pop('full_name'),
-                'birth_date': validated_data.pop('birth_date'),
-                'voter_status': validated_data.pop('voter_status'),
-                'contact_number': validated_data.pop('contact_number'),
-            }
+    def create(self, validated_data):
+        profile_data = {
+            'full_name': validated_data.pop('full_name'),
+            'birth_date': validated_data.pop('birth_date'),
+            'voter_status': validated_data.pop('voter_status', False),
+            'contact_number': validated_data.pop('contact_number', ''),
+        }
 
-            with transaction.atomic():
-                user = User.objects.create_user(
-                    username=validated_data['username'],
-                    email=validated_data.get['email'],
-                    password=validated_data['password'],
-                    role=User.Role.RESIDENT
-                )
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=validated_data['username'],
+                email=validated_data.get('email', ''),
+                password=validated_data['password'],
+                role=User.Role.RESIDENT
+            )
+            Resident.objects.create(user=user, **profile_data)
 
-                Resident.objects.create(
-                    user=user,
-                    **profile_data
-                )
-
-            return user 
-                
+        return user
