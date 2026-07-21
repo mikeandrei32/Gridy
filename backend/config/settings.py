@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'gridy_auth',
+    'gridy_services',
 ]
 
 MIDDLEWARE = [
