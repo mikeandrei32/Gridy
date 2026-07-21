@@ -7,7 +7,7 @@ class IsBarangayOfficial(BasePermission):
         return bool(
             request.user and 
             request.user.is_authenticated and
-            request.user.role == User.role.ADMIN
+            request.user.role == User.Role.ADMIN
         )
 
 class IsResident(BasePermission):
@@ -18,4 +18,3 @@ class IsResident(BasePermission):
             request.user.role == User.Role.RESIDENT
         )
 
-        
