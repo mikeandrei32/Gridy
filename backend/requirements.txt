@@ -7,3 +7,5 @@ djangorestframework_simplejwt==5.5.1
 psycopg2-binary==2.9.12
 PyJWT==2.13.0
 sqlparse==0.5.5
+cloudinary==1.41.0
+django-cloudinary-storage==0.3.0
