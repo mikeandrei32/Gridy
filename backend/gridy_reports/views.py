@@ -1,3 +1,19 @@
-from django.shortcuts import render
+from rest_framework import viewsets, permissions
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from .models import IssueReport
+from .serializers import IssueReportSerializer
 
-# Create your views here.
+class IssueReportViewSet(viewsets.ModelViewSet):
+    # 1. Fetch all reports, newest first
+    queryset = IssueReport.objects.all().order_by('-created_at')
+    serializer_class = IssueReportSerializer
+    
+    # 2. Require authentication to view or submit reports
+    permission_classes = [permissions.IsAuthenticated]
+
+    # 3. Enable handling of image uploads (multipart/form-data)
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    # 4. Automatically set the reporter to the logged-in user making the request
+    def perform_create(self, serializer):
+        serializer.save(reporter=self.request.user)
