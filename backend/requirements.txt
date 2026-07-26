@@ -10,3 +10,4 @@ sqlparse==0.5.5
 cloudinary==1.41.0
 django-cloudinary-storage==0.3.0
 firebase-admin==6.5.0
+Pillow==11.0.0
