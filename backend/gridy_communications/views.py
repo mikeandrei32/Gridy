@@ -13,7 +13,7 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             # Anyone logged in (Resident or Official) can read
             return [permissions.IsAuthenticated()]
         # Only officials can write (create, update, delete)
-        return [IsBarangayOfficial]
+        return [IsBarangayOfficial()]
     
     # 2. Auto-assign the creator when saving
     def perform_create(self, serializer):
@@ -28,7 +28,7 @@ class ActivityScheduleViewSet(viewsets.ModelViewSet):
             # Anyone logged in (Resident or Official) can read
             return [permissions.IsAuthenticated()]
         # Only officials can write (create, update, delete)
-        return [IsBarangayOfficial]
+        return [IsBarangayOfficial()]
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
