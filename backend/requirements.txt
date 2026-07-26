@@ -9,3 +9,4 @@ PyJWT==2.13.0
 sqlparse==0.5.5
 cloudinary==1.41.0
 django-cloudinary-storage==0.3.0
+firebase-admin==6.5.0
