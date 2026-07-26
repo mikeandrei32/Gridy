@@ -173,3 +173,23 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
 else:
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+import os
+import firebase_admin
+from firebase_admin import credentials
+
+
+# 1. Read the JSON key path from .env
+FIREBASE_SERVICE_ACCOUNT_JSON_PATH = env('FIREBASE_SERVICE_ACCOUNT_JSON_PATH', default='')
+
+# 2. Defensively check if the file path is set and actually exists
+if FIREBASE_SERVICE_ACCOUNT_JSON_PATH and os.path.exists(FIREBASE_SERVICE_ACCOUNT_JSON_PATH):
+    try:
+        cred = credentials.Certificate(FIREBASE_SERVICE_ACCOUNT_JSON_PATH)
+        firebase_admin.initialize_app(cred)
+        print("Firebase Admin SDK succesfully initialized.")
+    except Exception as e:
+        print(f"Error initializing Firebase Admin SDK: {e}")
+else: 
+    print("Warning: Firebase service account JSON key not found. FCM notifications are disabled.")
