@@ -22,5 +22,6 @@ urlpatterns = [
     path('api/v1/auth/', include('gridy_auth.urls')),
     path('api/v1/', include('gridy_services.urls')),
     path('api/v1/', include('gridy_reports.urls')),
+    path('api/v1/', include('gridy_communications.urls')),
 ]
 
