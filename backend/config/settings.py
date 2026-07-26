@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'gridy_auth',
     'gridy_services',
     'gridy_reports',
+    'gridy_communications',
 ]
 
 MIDDLEWARE = [
