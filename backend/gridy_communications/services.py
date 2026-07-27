@@ -65,3 +65,21 @@ def send_fcm_topic_notification(topic, title, body, data=None):
     except Exception as e:
         logger.error(f"Error sending to topic {topic}: {e}")
         return None
+
+
+def send_notification_to_user(user, title, body, data=None):
+    """
+    Sends a push notification to all active devices registered to a specific user
+    """
+
+    devices = user.fcm_devices.all()
+    if not devices.exists():
+        logger.warning(f"No FCM devices registered for user {user.username}, skipping notification.")
+        return []
+
+    responses = []
+    for device in devices:
+        response = send_fcm_notification(device.token, title, body, data)
+        if response:
+            responses.append(response)
+    return responses
