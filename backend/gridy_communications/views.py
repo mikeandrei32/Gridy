@@ -3,6 +3,8 @@ from gridy_auth.permissions import IsBarangayOfficial
 from gridy_communications.models import Announcement, ActivitySchedule
 from gridy_communications.serializers import AnnouncementSerializer, ActivityScheduleSerializer
 from gridy_communications.services import send_fcm_topic_notification
+from gridy_communications.models import FCMDevice
+from gridy_communications.serializers import FCMDeviceSerializer
 
 
 class ActivityScheduleViewSet(viewsets.ModelViewSet):
@@ -37,3 +39,19 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
             body=instance.title,
             data={"announcement_id": str(instance.id)}
         )
+
+class FCMDeviceViewSet(viewsets.ModelViewSet):
+    queryset = FCMDevice.objects.all()
+    serializer_class = FCMDeviceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    # Clean up any existing records matching the token to prevent duplicate key crashes 
+    def create(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        if token:
+            FCMDevice.objects.filter(token=token).delete()
+        return super().create(request, *args, **kwargs)
+
+    # Auto-assign the user during creation
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
