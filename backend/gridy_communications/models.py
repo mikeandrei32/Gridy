@@ -26,3 +26,18 @@ class ActivitySchedule(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class FCMDevice(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.CASCADE,
+        related_name="fcm_devices"
+    )
+
+    # FCM reg tokens are typically long strs (up to 255+ chars)
+    token = models.TextField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Device ({self.token[:20]}...)"

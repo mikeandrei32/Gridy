@@ -5,3 +5,7 @@ __pycache__/
 context/
 venv/
 db.sqlite3
+
+# Firebase Private Keys
+firebase-*.json
+*.json
