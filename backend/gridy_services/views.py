@@ -7,6 +7,7 @@ from gridy_auth.models import User
 from gridy_auth.permissions import IsBarangayOfficial
 from .models import DocumentRequest, QueueTicket
 from .serializers import DocumentRequestSerializer, QueueTicketSerializer
+from gridy_communications.services import send_notification_to_user
 
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
@@ -39,6 +40,14 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
         if admin_notes:
             document_request.admin_notes = admin_notes
         document_request.save()
+
+        # Trigger push notification to the resident
+        send_notification_to_user(
+            user=document_request.user,
+            title="Document Request Update",
+            body=f"Your request for {document_request.document_type} is now {document_request.get_status_display()}.",
+            data={"request_id": str(document_request.id)}
+        )
         
         return Response(DocumentRequestSerializer(document_request).data, status=status.HTTP_200_OK)
 
@@ -77,6 +86,16 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
                 
             next_ticket.status = QueueTicket.Status.SERVING
             next_ticket.save()
+
+            # Trigger push notification if the ticket is linked toa regsitered resident
+
+            if next_ticket.user:
+                send_notification_to_user(
+                    user=next_ticket.user,
+                    title="Queue Update",
+                    body=f"Your ticket {next_ticket.ticket_number} is now being served!",
+                    data={"ticket_id": str(next_ticket.id)}
+                )
             
             remaining_waiting = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING).count()
             
