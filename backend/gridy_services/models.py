@@ -65,3 +65,20 @@ class QueueTicket(models.Model):
 
     def __str__(self):
         return f"Ticket {self.ticket_number} ({self.status})"
+
+
+    def save(self, *args, **kwargs):
+        if not self.ticket_number:
+            # Sequence ticket numbers liek T001, T002, etc.
+            last_ticket = QueueTicket.objects.all().order_by('id').last()
+            if last_ticket:
+                try:
+                    last_num = int(last_ticket.ticket_number[1:])
+                    new_num = last_num + 1
+                except ValueError:
+                    new_num = 1
+            else:
+                new_num = 1
+            self.ticket_number = f"T{new_num:03d}"
+        super().save(*args, **kwargs)
+            
