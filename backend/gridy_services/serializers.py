@@ -36,4 +36,4 @@ class QueueTicketSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at'
         ]
-        read_only_fields = ['status', 'created_at', 'updated_at']
+        read_only_fields = ['status', 'ticket_number', 'created_at', 'updated_at']
