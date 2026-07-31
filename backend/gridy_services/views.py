@@ -9,6 +9,10 @@ from .models import DocumentRequest, QueueTicket
 from .serializers import DocumentRequestSerializer, QueueTicketSerializer
 from gridy_communications.services import send_notification_to_user
 
+from rest_framework.views import APIView
+from django.utils import timezone
+from gridy_reports.models import IssueReport
+
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
@@ -103,3 +107,62 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
                 "current_ticket": next_ticket.ticket_number,
                 "remaining_waiting": remaining_waiting
             }, status=status.HTTP_200_OK)
+
+
+class DashboardSummaryView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsBarangayOfficial]
+
+    def get(self, request, *args, **kwargs):
+
+        # 1. Document request statistics
+        doc_total = DocumentRequest.objects.count()
+        doc_pending = DocumentRequest.objects.filter(status=DocumentRequest.Status.PENDING).count()
+        doc_approved = DocumentRequest.objects.filter(status=DocumentRequest.Status.APPROVED).count()
+        doc_rejected = DocumentRequest.objects.filter(status=DocumentRequest.Status.REJECTED).count()
+        doc_released = DocumentRequest.objects.filter(status=DocumentRequest.Status.RELEASED).count()
+        
+        # 2. Issue reports statistics and urgency breakdown
+        issue_total = IssueReport.objects.count()
+        issue_pending = IssueReport.objects.filter(status=IssueReport.Status.PENDING).count()
+        issue_in_progress = IssueReport.objects.filter(status=IssueReport.Status.IN_PROGRESS).count()
+        issue_resolved = IssueReport.objects.filter(status=IssueReport.Status.RESOLVED).count()
+        
+        issues_by_urgency_low = IssueReport.objects.filter(urgency=IssueReport.Urgency.LOW).count()
+        issues_by_urgency_medium = IssueReport.objects.filter(urgency=IssueReport.Urgency.MEDIUM).count()
+        issues_by_urgency_high = IssueReport.objects.filter(urgency=IssueReport.Urgency.HIGH).count()
+        issues_by_urgency_urgent = IssueReport.objects.filter(urgency=IssueReport.Urgency.URGENT).count()
+
+        # 3. Queue activity stats for today
+        today = timezone.now().date()
+        queue_total_today = QueueTicket.objects.filter(created_at__date=today).count()
+        serving_ticket = QueueTicket.objects.filter(status=QueueTicket.Status.SERVING).first()
+        queue_waiting_count = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING).count()
+
+        
+        return Response ({
+            "document_requests": {
+                "total": doc_total,
+                "pending": doc_pending,
+                "approved": doc_approved,
+                "rejected": doc_rejected,
+                "released": doc_released
+            },
+            "issue_reports": {
+                "total": issue_total,
+                "pending": issue_pending,
+                "in_progress": issue_in_progress,
+                "resolved": issue_resolved,
+                "urgency_breakdown": {
+                    "low": issues_by_urgency_low,
+                    "medium": issues_by_urgency_medium,
+                    "high": issues_by_urgency_high,
+                    "urgent": issues_by_urgency_urgent,
+                }
+            },
+            "queue_activity": {
+                "total_today": queue_total_today,
+                "serving_now": serving_ticket.ticket_number if serving_ticket else None,
+                "waiting_count": queue_waiting_count
+            }
+        }, status=status.HTTP_200_OK)
+        
