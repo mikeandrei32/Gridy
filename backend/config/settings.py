@@ -194,3 +194,18 @@ if FIREBASE_SERVICE_ACCOUNT_JSON_PATH and os.path.exists(FIREBASE_SERVICE_ACCOUN
         print(f"Error initializing Firebase Admin SDK: {e}")
 else: 
     print("Warning: Firebase service account JSON key not found. FCM notifications are disabled.")
+
+
+# Celery and Redis Configuration
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# Dynamically enable Eager Mode when running tests
+import sys
+if 'test' in sys.argv:
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
