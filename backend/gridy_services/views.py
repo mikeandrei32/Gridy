@@ -16,7 +16,11 @@ from gridy_reports.models import IssueReport
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'create']:
+            return [permissions.IsAuthenticated()]
+        return [IsBarangayOfficial()]
 
     def get_queryset(self):
         user = self.request.user
