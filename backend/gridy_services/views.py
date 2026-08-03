@@ -61,9 +61,18 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
 
 
 class QueueTicketViewSet(viewsets.ModelViewSet):
-    queryset = QueueTicket.objects.all()
     serializer_class = QueueTicketSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'create', 'live_status']:
+            return [permissions.IsAuthenticated()]
+        return [IsBarangayOfficial()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == User.Role.ADMIN:
+            return QueueTicket.objects.all().order_by('-created_at')
+        return QueueTicket.objects.filter(user=user).order_by('-created_at')
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
