@@ -6,8 +6,11 @@ Gridy is a comprehensive, all-in-one municipal management platform designed to s
 
 ## Technology Stack
 
-- **Framework:** Django 5.x & Django REST Framework (DRF)
+- **Framework:** Django 6.x & Django REST Framework (DRF)
 - **Authentication:** JSON Web Tokens (SimpleJWT)
+- **Task Queue & Caching:** Celery & Redis (Asynchronous background processing & caching)
+- **API Documentation:** OpenAPI 3.0 via `drf-spectacular`
+- **PDF Generation:** `xhtml2pdf` dynamic certificate renderer
 - **Database:** PostgreSQL (production-ready) / SQLite (development)
 - **Media Hosting:** Cloudinary Integration (Multipart image parsing)
 - **Push Notifications:** Firebase Cloud Messaging (FCM) via Firebase Admin SDK
@@ -27,13 +30,17 @@ The system is structured as modular, decoupled Django applications:
 2. **`gridy_services` (Barangay Core Services):**
    - **Document Requests:** Handles residents' requests for certificates (Barangay Clearance, Indigency) and secures status validations (Approved/Rejected) exclusively to Barangay Officials.
    - **Hybrid Queuing System:** Generates auto-sequenced queue tickets (`T001`, `T002`, etc.) and manages live queue positions.
+   - **Analytics Dashboard:** Aggregates document status, queue counts, and incident urgency statistics (`GET /api/v1/dashboard/summary/`).
 3. **`gridy_reports` (Incident Reporting):**
    - Exposes CRUD endpoints for hazard/broken infrastructure reporting.
    - Configured with multipart parsing to compress and stream attachments directly to Cloudinary.
+   - Supports Urgency levels (`LOW`, `MEDIUM`, `HIGH`, `URGENT`).
 4. **`gridy_communications` (Community Board & Alerts):**
    - Board announcements supporting priority pinning.
    - Community activities and event schedules.
-   - Handles device token registrations (`FCMDevice`) and FCM notifications dispatching.
+   - Handles device token registrations (`FCMDevice`) and FCM notifications dispatching via Celery background tasks.
+5. **`gridy_audit` (Administrative Audit Trail):**
+   - Tracks official administrative actions (validations, queue advancements) for government transparency and auditing (`AuditLog`).
 
 ---
 
@@ -56,7 +63,7 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
 # Firebase Push Alerts (FCM)
-FIREBASE_SERVICE_ACCOUNT_JSON=relative/path/to/firebase-key.json
+FIREBASE_SERVICE_ACCOUNT_JSON_PATH=relative/path/to/firebase-key.json
 ```
 
 ---

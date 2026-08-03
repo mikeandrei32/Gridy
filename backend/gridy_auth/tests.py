@@ -110,7 +110,7 @@ class AuthAPITests(APITestCase):
             "imported2,,Imported Two,1988-02-20,,False\n"
         )
         csv_file = io.BytesIO(csv_data.encode('utf-8'))
-        csv_file.name = 'residents.csv'  # <-- Assign directly to the attribute
+        csv_file.name = 'residents.csv'
 
         url = reverse('import_residents')
         response = self.client.post(url, {'file': csv_file}, format='multipart')
