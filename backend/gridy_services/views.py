@@ -29,7 +29,13 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
         return DocumentRequest.objects.filter(user=user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        # Force status to PENDING and clear admin_notes during creation
+        serializer.save(
+            user=self.request.user,
+            status=DocumentRequest.Status.PENDING,
+            admin_notes=""
+        )
+
 
     @action(detail=True, methods=['patch'], permission_classes=[IsBarangayOfficial])
     def validate(self, request, pk=None):

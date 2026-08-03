@@ -20,4 +20,8 @@ class IssueReportViewSet(viewsets.ModelViewSet):
 
     # 4. Automatically set the reporter to the logged-in user making the request
     def perform_create(self, serializer):
-        serializer.save(reporter=self.request.user)
+        # Force status to PENDING during creation
+        serializer.save(
+            reporter=self.request.user,
+            status=IssueReport.Status.PENDING
+        )
