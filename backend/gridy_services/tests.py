@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from gridy_auth.models import User
 from gridy_services.models import DocumentRequest, QueueTicket
+from gridy_audit.models import AuditLog
 
 # Create your tests here.
 
@@ -66,6 +67,9 @@ class ServiceAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(DocumentRequest.objects.get(user=self.resident).status, "APPROVED")
         
+        # Verify that an audit log entry was generated
+        self.assertEqual(AuditLog.objects.filter(action_type=AuditLog.ActionType.DOCUMENT_ACTION).count(), 1)
+        
 
     def test_resident_can_create_queue_ticket(self):
         self.client.force_login(self.resident)
@@ -96,6 +100,9 @@ class ServiceAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ticket.refresh_from_db()
         self.assertEqual(ticket.status, "SERVING")
+
+        # Verify that an audit log entry was generated
+        self.assertEqual(AuditLog.objects.filter(action_type=AuditLog.ActionType.QUEUE_ACTION).count(),  1)
 
 
     def test_dashboard_summary_required_auth(self):

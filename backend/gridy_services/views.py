@@ -13,6 +13,9 @@ from rest_framework.views import APIView
 from django.utils import timezone
 from gridy_reports.models import IssueReport
 
+from gridy_audit.services import log_action
+from gridy_audit.models import AuditLog
+
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
@@ -54,6 +57,14 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
         if admin_notes:
             document_request.admin_notes = admin_notes
         document_request.save()
+
+        # Log the administrative validation action
+        log_action(
+            user=request.user,
+            action_type=AuditLog.ActionType.DOCUMENT_ACTION,
+            description=f"Validated document request #{document_request.id} ({document_request.document_type}) as {document_request.get_status_display()}.",
+            request=request
+        )
 
         # Trigger push notification to the resident
         send_notification_to_user_task.delay(
@@ -109,6 +120,14 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
                 
             next_ticket.status = QueueTicket.Status.SERVING
             next_ticket.save()
+
+            # Log the administrative queue counter advancement
+            log_action(
+                user=request.user,
+                action_type=AuditLog.ActionType.QUEUE_ACTION,
+                description=f"Advanced queue to ticket {next_ticket.ticket_number} (ID: {next_ticket.id}).",
+                request=request
+            )
 
             # Trigger push notification if the ticket is linkedtoa regsitered resident
 
