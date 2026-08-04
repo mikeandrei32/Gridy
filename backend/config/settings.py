@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'gridy_reports',
     'gridy_communications',
     'gridy_audit',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -146,6 +147,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 from datetime import timedelta
@@ -177,8 +179,9 @@ else:
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
-import os
+# pyrefly: ignore [missing-import]
 import firebase_admin
+# pyrefly: ignore [missing-import]
 from firebase_admin import credentials
 
 
@@ -210,3 +213,12 @@ import sys
 if 'test' in sys.argv:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_TASK_EAGER_PROPAGATES = True
+
+
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Gridy API',
+    'DESCRIPTION': 'Barangay Information and Service Management System API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}

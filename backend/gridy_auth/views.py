@@ -8,6 +8,10 @@ from .serializers import (
     CustomTokenObtainPairSerializer,
 )
 
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from rest_framework import serializers
+
 import csv
 import io
 from datetime import datetime
@@ -19,6 +23,21 @@ from gridy_auth.serializers import UserSerializer
 
 # Create your views here.
 
+class FileUploadSerializer(serializers.Serializer):
+    file = serializers.FileField(help_text="CSV file containing resident accounts to import.")
+
+
+class ResidentImportResponseSerializer(serializers.Serializer):
+    imported = serializers.IntegerField(help_text="Number of residents successfully imported.")
+    skipped_due_to_duplicate = serializers.IntegerField(help_text="Number of records skipped due to pre-existing username.")
+    errors = serializers.ListField(child=serializers.CharField(), help_text="List of validation error messages.")
+
+
+@extend_schema(
+    summary="Register Resident Account",
+    request=RegisterSerializer,
+    responses={201: UserSerializer, 400: OpenApiTypes.OBJECT}
+)
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
     
@@ -37,6 +56,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     
 
+@extend_schema(
+    summary="Get Current User Profile",
+    responses={200: UserSerializer}
+)
 class UserProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -44,7 +67,17 @@ class UserProfileView(APIView):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status.HTTP_200_OK)
 
-
+@extend_schema(
+    summary="Bulk Import Residents from CSV",
+    request={
+        'multipart/form-data': FileUploadSerializer
+    },
+    responses={
+        200: ResidentImportResponseSerializer,
+        207: ResidentImportResponseSerializer,
+        400: OpenApiTypes.OBJECT
+    }
+)
 class ResidentImportView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsBarangayOfficial]
     parser_classes = [MultiPartParser, FormParser]
