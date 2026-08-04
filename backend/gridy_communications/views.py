@@ -49,6 +49,8 @@ class FCMDeviceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user or not user.is_authenticated:
+            return FCMDevice.objects.none()
         if user.role == User.Role.ADMIN:
             return FCMDevice.objects.all()
         return FCMDevice.objects.filter(user=user)
