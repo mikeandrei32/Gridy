@@ -16,6 +16,13 @@ from gridy_reports.models import IssueReport
 from gridy_audit.services import log_action
 from gridy_audit.models import AuditLog
 
+from drf_spectacular.utils import extend_schema
+from .serializers import (
+    DocumentRequestSerializer,
+    QueueTicketSerializer,
+    DashboardSummarySerializer,
+)
+
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
@@ -27,6 +34,8 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user or not user.is_authenticated:
+            return DocumentRequest.objects.none()
         if user.role == User.Role.ADMIN:
             return DocumentRequest.objects.all().order_by('-created_at')
         return DocumentRequest.objects.filter(user=user).order_by('-created_at')
@@ -87,6 +96,8 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if not user or not user.is_authenticated:
+            return QueueTicket.objects.none()
         if user.role == User.Role.ADMIN:
             return QueueTicket.objects.all().order_by('-created_at')
         return QueueTicket.objects.filter(user=user).order_by('-created_at')
@@ -147,6 +158,11 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    summary="Get Dashboard Statistics",
+    description="Returns pre-calculated counters and urgency distributions for reports, document queues, and clearances.",
+    responses={200: DashboardSummarySerializer}
+)
 class DashboardSummaryView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsBarangayOfficial]
 
