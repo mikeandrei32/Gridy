@@ -153,4 +153,16 @@ class ServiceAPITests(APITestCase):
         self.assertEqual(response.data["issue_reports"]["urgency_breakdown"]["high"], 1)
         self.assertEqual(response.data["queue_activity"]["serving_now"], "T001")
         
-        
+
+class SystemHealthAPITests(APITestCase):
+    def test_health_check_endpoint_success(self):
+        url = reverse('health_check')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "healthy")
+        self.assertIn("database", response.data["services"])
+        self.assertIn("cache", response.data["services"])
+        self.assertEqual(response.data["services"]["database"]["status"], "healthy")
+        self.assertEqual(response.data["services"]["cache"]["status"], "healthy")
+        self.assertIn("latency_ms", response.data["services"]["database"])
+        self.assertIn("latency_ms", response.data["services"]["cache"])
