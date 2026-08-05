@@ -27,7 +27,6 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from django.utils import timezone
 from datetime import datetime
-import pytz
 from django.conf import settings
 from .models import RefreshSession
 from gridy_audit.services import get_client_ip
@@ -76,7 +75,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 refresh_token = RefreshToken(refresh_token_str)
                 jti = refresh_token['jti']
                 exp_timestamp = refresh_token['exp']
-                expires_at = datetime.fromtimestamp(exp_timestamp, tz=pytz.UTC)
+                expires_at = datetime.fromtimestamp(exp_timestamp, tz=timezone.UTC)
             except Exception:
                 return Response({"detail": "Token structure invalid."}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -150,7 +149,7 @@ class CustomTokenRefreshView(TokenRefreshView):
                 new_token = RefreshToken(new_refresh_token_str)
                 new_jti = new_token['jti']
                 new_exp = new_token['exp']
-                new_expires_at = datetime.fromtimestamp(new_exp, tz=pytz.UTC)
+                new_expires_at = datetime.fromtimestamp(new_exp, tz=timezone.UTC)
 
                 with transaction.atomic():
                     # Revoke the old session mapping and save the new active rotated JTI session
