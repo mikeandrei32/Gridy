@@ -16,7 +16,7 @@ export const Login: React.FC = () => {
     
     try {
       const response = await axiosPublic.post('/auth/login/', {
-        email: email,
+        username: email,
         password: password
       });
       login(response.data.user);
@@ -57,16 +57,16 @@ export const Login: React.FC = () => {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-slate-700">
-                Email address
+                Username
               </label>
               <div className="mt-1">
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="admin@barangay.gov.ph"
+                  placeholder="admin1"
                 />
               </div>
             </div>
