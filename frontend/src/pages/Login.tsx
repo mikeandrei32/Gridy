@@ -16,12 +16,23 @@ export const Login: React.FC = () => {
     
     try {
       const response = await axiosPublic.post('/auth/login/', {
-        email: email,
+        username: email,
         password: password
       });
-      login(response.data.user);
+      
+      const { access } = response.data;
+      localStorage.setItem('access_token', access);
+      
+      const payload = JSON.parse(atob(access.split('.')[1]));
+      
+      login({ 
+        id: payload.user_id,
+        username: payload.username,
+        full_name: payload.full_name,
+        role: payload.role
+      });
+      
       navigate('/dashboard');
-
     } catch (err: any) {
       console.error("Login failed:", err);
       if (err.response?.data?.detail) {
@@ -41,7 +52,7 @@ export const Login: React.FC = () => {
           Gridy Admin Portal
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
-          Secure Barangay Management System
+          Barangay Information Management System
         </p>
       </div>
 
@@ -57,16 +68,16 @@ export const Login: React.FC = () => {
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-slate-700">
-                Email address
+                Username
               </label>
               <div className="mt-1">
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="admin@barangay.gov.ph"
+                  placeholder="admin1"
                 />
               </div>
             </div>
