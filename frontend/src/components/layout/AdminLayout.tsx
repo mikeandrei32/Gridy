@@ -21,13 +21,23 @@ export const AdminLayout: React.FC = () => {
                 to="/dashboard" 
                 className={({ isActive }) => 
                   `block px-4 py-2 rounded-md transition-colors ${
-                    isActive 
-                      ? "bg-primary text-white" 
-                      : "hover:bg-primary/10 hover:text-primary"
+                    isActive ? "bg-primary text-white" : "hover:bg-primary/10 hover:text-primary"
                   }`
                 }
               >
                 Dashboard
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/documents" 
+                className={({ isActive }) => 
+                  `block px-4 py-2 rounded-md transition-colors ${
+                    isActive ? "bg-primary text-white" : "hover:bg-primary/10 hover:text-primary"
+                  }`
+                }
+              >
+                Document Requests
               </NavLink>
             </li>
           </ul>

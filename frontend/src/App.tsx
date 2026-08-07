@@ -3,6 +3,7 @@ import { Login } from "./pages/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout";
+import { DocumentRequests } from "./pages/DocumentRequests";
 
 export function App() {
     return (
@@ -16,6 +17,7 @@ export function App() {
                     {/* UI Layout Wrapper */}
                     <Route element={<AdminLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/documents" element={<DocumentRequests />} />
                         <Route path="/" element={<Navigate to="/dashboard" replace/>} />
                     </Route>
                 </Route>
