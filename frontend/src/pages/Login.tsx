@@ -6,36 +6,31 @@ import { axiosPublic } from '../api/axios';
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e: React.ChangeEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     try {
-      const response = await axiosPublic.post('/auth/login/', { 
-        username: email, // The backend expects 'username', but we're passing the email field value
-        password: password 
+      const response = await axiosPublic.post('/auth/login/', {
+        email: email,
+        password: password
       });
-      
-      const { access } = response.data;
-      // Store the access token for future API requests
-      localStorage.setItem('access_token', access);
-      
-      // Decode the JWT payload without a library
-      const payload = JSON.parse(atob(access.split('.')[1]));
-      
-      login({ 
-        id: payload.user_id,
-        username: payload.username,
-        full_name: payload.full_name,
-        role: payload.role
-      });
-      
+      login(response.data.user);
       navigate('/dashboard');
-    } catch (error) {
-      console.error("Login failed:", error);
-      alert("Failed to login. Please check your credentials.");
+
+    } catch (err: any) {
+      console.error("Login failed:", err);
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Login failed. Please check your credentials and try again.');
+      }
     }
   };
 
@@ -52,6 +47,13 @@ export const Login: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-surface py-8 px-4 shadow-md sm:rounded-lg sm:px-10 border border-border">
+          
+          {error && (
+            <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleLogin}>
             <div>
               <label className="block text-sm font-medium text-slate-700">
