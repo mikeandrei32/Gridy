@@ -2,7 +2,7 @@ node_modules/
 __pycache__/
 *.pyc
 .env
-context/
+/context/
 venv/
 db.sqlite3
 
