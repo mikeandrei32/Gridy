@@ -21,7 +21,7 @@ export const DocumentRequests: React.FC = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await axiosPrivate.get('/services/documents/');
+        const response = await axiosPrivate.get('/document-requests/');
         setRequests(response.data.results || response.data);
       } catch (err) {
         setError('Failed to load document requests.');
@@ -58,7 +58,7 @@ export const DocumentRequests: React.FC = () => {
     
     try {
       // Send the status update to Django
-      await axiosPrivate.patch(`/services/documents/${selectedRequest.id}/`, {
+      await axiosPrivate.patch(`/document-requests/${selectedRequest.id}/`, {
         status: newStatus
       });
       
