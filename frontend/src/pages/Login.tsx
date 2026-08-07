@@ -19,9 +19,20 @@ export const Login: React.FC = () => {
         username: email,
         password: password
       });
-      login(response.data.user);
+      
+      const { access } = response.data;
+      localStorage.setItem('access_token', access);
+      
+      const payload = JSON.parse(atob(access.split('.')[1]));
+      
+      login({ 
+        id: payload.user_id,
+        username: payload.username,
+        full_name: payload.full_name,
+        role: payload.role
+      });
+      
       navigate('/dashboard');
-
     } catch (err: any) {
       console.error("Login failed:", err);
       if (err.response?.data?.detail) {
@@ -41,7 +52,7 @@ export const Login: React.FC = () => {
           Gridy Admin Portal
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
-          Secure Barangay Management System
+          Barangay Information Management System
         </p>
       </div>
 
