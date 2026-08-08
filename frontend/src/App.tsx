@@ -4,6 +4,10 @@ import { Dashboard } from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { DocumentRequests } from "./pages/DocumentRequests";
+import { IssueReports } from "./pages/IssueReports";
+// 1. Import the new pages
+import { Announcements } from "./pages/Announcements";
+import { Activities } from "./pages/Activities";
 
 export function App() {
     return (
@@ -18,6 +22,11 @@ export function App() {
                     <Route element={<AdminLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/documents" element={<DocumentRequests />} />
+                        <Route path="/reports" element={<IssueReports />} />
+                        {/* 2. Register the new routes */}
+                        <Route path="/announcements" element={<Announcements />} />
+                        <Route path="/activities" element={<Activities />} />
+                        
                         <Route path="/" element={<Navigate to="/dashboard" replace/>} />
                     </Route>
                 </Route>
