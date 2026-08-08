@@ -52,6 +52,31 @@ export const AdminLayout: React.FC = () => {
                 Issue Reports
               </NavLink>
             </li>
+            <li>
+              <NavLink 
+                to="/announcements" 
+                className={({ isActive }) => 
+                  `block px-4 py-2 rounded-md transition-colors ${
+                    isActive ? "bg-primary text-white" : "hover:bg-primary/10 hover:text-primary"
+                  }`
+                }
+              >
+                Announcements
+              </NavLink>
+            </li>
+            <li>
+              <NavLink 
+                to="/activities" 
+                className={({ isActive }) => 
+                  `block px-4 py-2 rounded-md transition-colors ${
+                    isActive ? "bg-primary text-white" : "hover:bg-primary/10 hover:text-primary"
+                  }`
+                }
+              >
+                Activity Schedules
+              </NavLink>
+            </li>
+
           </ul>
         </nav>
         
