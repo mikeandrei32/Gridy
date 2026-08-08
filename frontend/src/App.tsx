@@ -4,6 +4,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminLayout } from "./components/layout/AdminLayout";
 import { DocumentRequests } from "./pages/DocumentRequests";
+import { IssueReports } from "./pages/IssueReports";
 
 export function App() {
     return (
@@ -18,6 +19,7 @@ export function App() {
                     <Route element={<AdminLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/documents" element={<DocumentRequests />} />
+                        <Route path="/reports" element={<IssueReports />} />
                         <Route path="/" element={<Navigate to="/dashboard" replace/>} />
                     </Route>
                 </Route>
