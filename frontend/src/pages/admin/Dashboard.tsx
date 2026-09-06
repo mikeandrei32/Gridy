@@ -74,9 +74,11 @@ const MetricCardSkeleton = () => (
         </div>
 );
 
-const ChartSkeleton = () => (
+const ChartSkeleton = ({ title }: { title?: string }) => (
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0]/80 animate-pulse">
-                <div className="h-5 w-48 bg-slate-200 rounded mb-6"></div>
+                <div className="h-5 w-48 bg-slate-200 rounded mb-6">
+                        {title && <span className="sr-only">{title}</span>}
+                </div>
                 <div className="h-[250px] w-full bg-slate-100 rounded-xl flex items-end justify-between px-4 pb-4">
                         <div className="w-12 h-[60%] bg-slate-200 rounded-t-sm"></div>
                         <div className="w-12 h-[80%] bg-slate-200 rounded-t-sm"></div>
