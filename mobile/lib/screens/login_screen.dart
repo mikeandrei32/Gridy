@@ -33,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
   AuthService? _authService;
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isOfficialMode = false;
   String? _errorMessage;
 
   @override
@@ -93,6 +94,29 @@ class _LoginScreenState extends State<LoginScreen> {
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
+
+      // Strict Portal Boundary Enforcement
+      if (!_isOfficialMode && authResponse.user.isOfficial) {
+        await _authService!.logout();
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Barangay Officials must use Official Authority Mode. Long-press the logo to switch.';
+        });
+        return;
+      }
+
+      if (_isOfficialMode && !authResponse.user.isOfficial) {
+        await _authService!.logout();
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'Citizen accounts cannot access the Barangay Authority Command.';
+        });
+        return;
+      }
 
       if (!mounted) return;
 
@@ -203,20 +227,74 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const SizedBox(height: 36),
 
-                        // Logo & Brand Name
-                        const Center(
-                          child: GridyLogo(
-                            iconSize: 64,
-                            textSize: 24,
+                        // Logo & Brand Name with Hidden Toggle
+                        Center(
+                          child: GestureDetector(
+                            onLongPress: () {
+                              setState(() {
+                                _isOfficialMode = !_isOfficialMode;
+                                _errorMessage = null;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    _isOfficialMode
+                                        ? 'Barangay Official Authority Mode Activated'
+                                        : 'Switched to Citizen Resident Portal',
+                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                  ),
+                                  backgroundColor: _isOfficialMode
+                                      ? const Color(0xFFD97706)
+                                      : const Color(0xFF0284C7),
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: const GridyLogo(
+                              iconSize: 64,
+                              textSize: 24,
+                            ),
                           ),
                         ),
+                        const SizedBox(height: 24),
 
-                        const SizedBox(height: 40),
+                        if (_isOfficialMode) ...[
+                          Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFFCD34D),
+                                ),
+                              ),
+                              child: const Text(
+                                'BARANGAY AUTHORITY ACCESS',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF92400E),
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ] else ...[
+                          const SizedBox(height: 16),
+                        ],
 
-                        // Header Typography
-                        const Text(
-                          'Welcome Back',
-                          style: TextStyle(
+                        Text(
+                          _isOfficialMode ? 'Official Sign In' : 'Welcome Back',
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
@@ -224,15 +302,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Please enter your citizen credentials to continue',
-                          style: TextStyle(
+                        Text(
+                          _isOfficialMode
+                              ? 'Authorized officials, Tanod, and barangay administrators'
+                              : 'Please enter your citizen credentials to continue',
+                          style: const TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w400,
                             color: AppColors.textSecondary,
                             height: 1.35,
                           ),
                         ),
+
+                        const SizedBox(height: 40),
+
 
                         // Dynamic Error Alert Banner
                         if (_errorMessage != null) ...[
@@ -366,7 +449,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         // Login Action Button
                         CustomButton(
-                          text: 'Login to',
+                          text: _isOfficialMode
+                              ? 'Authenticate Official'
+                              : 'Sign In to Citizen Portal',
                           isLoading: _isLoading,
                           icon: Icons.arrow_forward_rounded,
                           onPressed: _handleLogin,
@@ -374,42 +459,45 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 32),
 
-                        // Don't have an account? Register here
-                        Center(
-                          child: GestureDetector(
-                            onTap: _isLoading
-                                ? null
-                                : () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => RegisterScreen(
-                                          authService: _authService,
+                        // Don't have an account? Register here (Resident mode only)
+                        if (!_isOfficialMode) ...[
+                          const SizedBox(height: 32),
+                          Center(
+                            child: GestureDetector(
+                              onTap: _isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => RegisterScreen(
+                                            authService: _authService,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                            child: Text.rich(
-                              const TextSpan(
-                                text: "Don't have an account? ",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Register here',
-                                    style: TextStyle(
-                                      color: AppColors.primaryNavy,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                      );
+                                    },
+                              child: Text.rich(
+                                const TextSpan(
+                                  text: "Don't have an account? ",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w500,
                                   ),
-                                ],
+                                  children: [
+                                    TextSpan(
+                                      text: 'Register here',
+                                      style: TextStyle(
+                                        color: AppColors.primaryNavy,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                textAlign: TextAlign.center,
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
-                        ),
+                        ],
 
                         const Spacer(),
                         const SizedBox(height: 24),
