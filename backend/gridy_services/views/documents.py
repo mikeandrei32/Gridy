@@ -14,6 +14,7 @@ from gridy_services.serializers import DocumentRequestSerializer
 from gridy_communications.tasks import send_notification_to_user_task
 from gridy_audit.services import log_action
 from gridy_audit.models import AuditLog
+from rest_framework.exceptions import PermissionDenied
 
 class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
@@ -39,6 +40,14 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
         return DocumentRequest.objects.filter(user=user).order_by('-created_at')
 
     def perform_create(self, serializer):
+        user = self.request.user
+
+        # Enforce residency verification barrier
+        if hasattr(user, 'profile') and not user.profile.is_verified:
+            raise PermissionDenied(
+                "Your account is currently pending verification. Please verify your residency with Barangay Hall before requesting clearances."
+            )
+        
         serializer.save(
             user=self.request.user,
             status=DocumentRequest.Status.PENDING,
