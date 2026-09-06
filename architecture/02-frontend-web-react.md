@@ -1,61 +1,65 @@
-# 02 Frontend Web Implementation (ReactJS)
+# 02 Frontend Web Implementation (ReactJS & TypeScript)
 
 ## 1. Technology Stack
-*   **Core:** ReactJS (Vite) for modern, fast HMR tooling.
-*   **State Management:** **Zustand** for lightweight global store management (e.g., active queue status, dashboard analytics).
-*   **Styling:** Tailwind CSS for design system token enforcement.
-*   **API Client:** Axios with dynamic request/response interceptors.
-*   **Querying/Polling:** TanStack Query (`@tanstack/react-query`) with SWR capabilities for interval-based status fetching.
+*   **Core:** React 19 with TypeScript, bundled using **Vite** for rapid hot module replacement.
+*   **Styling:** Tailwind CSS with utility-first responsive tokens and full dark/light theme switching.
+*   **State & Authentication:** React Context (`AuthContext`, `ThemeContext`) with HTTP cookie session sync.
+*   **API Client:** Axios instance with automated Bearer authorization headers and centralized error dispatch.
+*   **Icons & Motion:** Lucide React icons with smooth micro-animations.
 
 ---
 
-## 2. Directory & Directory Architecture
-The React codebase conforms to a modular layout:
+## 2. Directory Architecture
+The frontend follows a domain-driven, role-segregated layout:
+
 ```text
-src/
-├── assets/             # Global image assets and CSS themes
+frontend/src/
 ├── components/
-│   ├── common/         # Reusable inputs, buttons, tables
-│   ├── layout/         # Sidebar, Navbar, and admin shell
-│   ├── queue/          # Active tickets list and queue control widgets
-│   └── documents/      # Request logs and document validation modals
-├── hooks/              # Custom React hooks (e.g., useQueuePolling)
-├── services/           # Axios instance configuration and API request definitions
-├── store/              # Zustand global state declarations (authStore, queueStore)
-└── views/              # Pages (Login, Dashboard, Documents, Reports)
+│   ├── citizen/             # Citizen portal components (CitizenLayout, navbars)
+│   ├── common/              # Universal UI (buttons, badges, inputs, skeleton loaders)
+│   ├── documents/           # Clearance tables, validation modal, walk-in creation
+│   ├── issues/              # Incident reporting cards, triage badges
+│   ├── layout/              # Admin shell (Sidebar, Navbar, MobileDrawer)
+│   └── queue/               # Queue ticket displays and counter widgets
+├── context/                 # AuthContext, ThemeContext
+├── pages/
+│   ├── admin/               # Executive Desk views (Dashboard, Queue, Documents, Reports)
+│   ├── citizen/             # Citizen Self-Service views (Documents, Queue, Bulletin, Issues)
+│   └── community/           # Residents directory, RBI census CSV import
+├── routes/                  # ProtectedRoute, AppRoutes, role gatekeepers
+└── services/                # Axios API service integrations
+
 ```
 
 ---
 
-## 3. Core Frontend Workflows
+## 3. Dual-Portal Architectural Pattern
 
-### 3.1 Silent Token Refresh Interceptor
-To maintain the login session without frustrating officials, Axios implements a response interceptor. When an API call fails with a `401 Unauthorized` status code, the interceptor intercepts the error, fires a call to `/api/v1/auth/token/refresh/`, updates the access token, and retries the original request.
+Per **ADR 008**, the application separates public constituent self-service from executive LGU administration:
 
-```javascript
-// Example interceptor logic structure
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      const newAccessToken = await refreshAuthToken(); // POSTs to auth/token/refresh/
-      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-      return axiosInstance(originalRequest);
-    }
-    return Promise.reject(error);
-  }
-);
-```
+### 3.1 Citizen Self-Service Desktop Portal (`/portal/*`)
+Mounted under `CitizenLayout`, providing a distraction-free, resident-first experience:
+*   **`/portal/documents` (`CitizenDocuments.tsx`):** Self-service clearance applications with instant status tracking and downloadable legal PDF slips.
+*   **`/portal/queue` (`CitizenQueue.tsx`):** Live queue ticket tracker showing active serving numbers and average wait times.
+*   **`/portal/bulletin` (`CitizenBulletin.tsx`):** Community announcements feed and scheduled events calendar.
+*   **`/portal/issues` (`CitizenIssues.tsx`):** Public incident reporting with client-side image attachment and geo-location notes.
 
-### 3.2 Real-time Dashboard Polling
-The React dashboard monitors active queue ticket statuses using TanStack Query. It triggers a query to `/api/v1/queue/live-status/` every 5 seconds (`refetchInterval: 5000`) to guarantee that counters update dynamically when the mobile app registers new slips.
+### 3.2 Executive Desk Portal (`/admin/*`)
+Mounted under `AdminLayout`, guarded by `ProtectedRoute` requiring `ADMIN` or `DILG_ADMIN` roles:
+*   **`/admin/dashboard` (`Dashboard.tsx`):** Executive overview with gross clearance revenue collection, resident demographics, and incident scenario charts.
+*   **`/admin/documents` (`DocumentsManagement.tsx`):** Clearance triage, treasury O.R. fee assignment, and walk-in legal issuance.
+*   **`/admin/residents` (`ResidentsManagement.tsx`):** Registry of Barangay Inhabitants directory with bulk RBI CSV import modal and template download.
+*   **`/admin/queue`, `/admin/reports`, `/admin/hotlines`, `/admin/settings`.
+
+### 3.3 Secret Demarcation Gateway (`Shift + \`)
+To allow evaluators and developers to switch between citizen and official views without disrupting presentation flow, pressing `Shift + \` triggers a hidden modal. The gateway verifies session permissions before permitting navigation into administrative routes.
 
 ---
 
-## 4. Key Component Modules
-*   **Dashboard Module:** Displays high-level counters (registered residents, active pending reports) and aggregates incoming urgent flags.
-*   **Queue Management View:** Displays the waitlist queue table, priority tags, and triggers the `POST /api/v1/queue/next/` call.
-*   **Document Processing View:** Displays pending documents with a filterable tabular interface, offering a validation popup modal to input validation remarks.
-*   **Schedule & Announcements View:** Admin form interface to compose announcements and trigger schedule calendars.
+## 4. Key Operational Components
+
+### 4.1 Treasury Auditing in ReviewDocumentModal
+Officials process clearances via `ReviewDocumentModal.tsx`. Prior to transitioning a document to `RELEASED`, the modal requires input of the **Official Receipt (O.R.) Number** and **Fee Amount in PHP**, directly embedding them into the database and server-side PDF generator.
+
+### 4.2 Bulk RBI Census CSV Import
+Located in `ResidentsManagement.tsx`, this component accepts local registry CSV files, performs client-side header validation, provides a downloadable template (`residents_template.csv`), and transmits records to `/api/v1/auth/import-residents/`.

@@ -15,7 +15,7 @@ router.register(r'activities', ActivityScheduleViewSet, basename='activity')
 router.register(r'devices', FCMDeviceViewSet, basename='fcm-device')
 router.register(r'hotlines', EmergencyHotlineViewSet, basename='hotline')
 router.register(r'faqs', FAQViewSet, basename='faq')
-router.register(r'admin-notifications', EmergencyHotlineViewSet, basename='admin-notification')
+router.register(r'admin-notifications', AdminNotificationViewSet, basename='admin-notification')
 
 urlpatterns = [
     path('', include(router.urls)),

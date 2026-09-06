@@ -1,18 +1,20 @@
 # 06 API Endpoint Contracts
 
-## 1. RESTful Design
-All endpoints enforce authorization using JWT Bearer tokens in the HTTP `Authorization` headers, except for the login and token refresh endpoints.
+## 1. RESTful Design & Security Boundary
+All protected endpoints enforce authorization using short-lived JWT Bearer tokens passed via the HTTP `Authorization` header:
 
 `Authorization: Bearer <access_token>`
+
+Per **ADR 002 (HttpOnly Cookie Authentication)**, refresh tokens are never returned in response payloads or stored in JavaScript memory (`localStorage`/`sessionStorage`). They are set and rotated within secure, server-managed `HttpOnly; SameSite=Lax` cookies.
 
 ---
 
 ## 2. API Endpoints
 
-### 2.1 Authentication Module
+### 2.1 Authentication & Census Module
 
 #### POST `/api/v1/auth/login/`
-*   **Description:** Authenticate users and return access/refresh tokens.
+*   **Description:** Authenticates user credentials. Returns an access token in JSON and sets a rotating refresh token in an `HttpOnly` cookie.
 *   **Payload (JSON):**
     ```json
     {
@@ -24,19 +26,18 @@ All endpoints enforce authorization using JWT Bearer tokens in the HTTP `Authori
     ```json
     {
       "access": "eyJhbGciOi...",
-      "refresh": "eyJhbGciOi...",
-      "role": "RESIDENT"
+      "role": "RESIDENT",
+      "user_id": 42,
+      "username": "resident_username",
+      "barangay": "Barangay Guadalupe"
     }
     ```
+*   **Response Headers:**
+    `Set-Cookie: refresh_token=eyJhbGciOi...; HttpOnly; Path=/api/v1/auth/; SameSite=Lax`
 
 #### POST `/api/v1/auth/token/refresh/`
-*   **Description:** Refresh an expired access token using a valid refresh token.
-*   **Payload (JSON):**
-    ```json
-    {
-      "refresh": "eyJhbGciOi..."
-    }
-    ```
+*   **Description:** Obtains a fresh access token using the rotating cookie-backed refresh session.
+*   **Payload:** Empty (cookie read automatically).
 *   **Response (200 OK):**
     ```json
     {
@@ -44,263 +45,191 @@ All endpoints enforce authorization using JWT Bearer tokens in the HTTP `Authori
     }
     ```
 
----
-
-### 2.2 Communications Module
-
-#### GET `/api/v1/announcements/`
-*   **Description:** Retrieve announcements. Filterable by category query param (`AID`, `MEDICAL`, `EVENT`, `GENERAL`).
-*   **Response (200 OK):**
-    ```json
-    [
-      {
-        "id": 1,
-        "title": "Barangay General Assembly",
-        "category": "GENERAL",
-        "content": "Join us on Saturday at the basketball court.",
-        "scheduled_date": "2026-07-25T09:00:00Z"
-      }
-    ]
-    ```
-
-#### POST `/api/v1/announcements/`
-*   **Description:** Post a new announcement (Admin role authorization required).
-*   **Payload (JSON):**
-    ```json
-    {
-      "title": "Medical Mission 2026",
-      "category": "MEDICAL",
-      "content": "Free dental checkup and basic medicines.",
-      "scheduled_date": "2026-08-01T08:00:00Z"
-    }
-    ```
+#### POST `/api/v1/auth/import-residents/`
+*   **Description:** Bulk imports residents from a Registry of Barangay Inhabitants (RBI) CSV file (Barangay Official only). Auto-assigns residents to the official's barangay and sets `is_verified=True`.
+*   **Payload (Multipart Form):**
+    *   `file`: CSV file containing columns `full_name`, `birth_date`, `purok`, `contact_number`, `voter_status`.
 *   **Response (201 Created):**
     ```json
     {
-      "id": 2,
-      "title": "Medical Mission 2026",
-      "category": "MEDICAL",
-      "content": "Free dental checkup and basic medicines.",
-      "scheduled_date": "2026-08-01T08:00:00Z"
+      "imported_count": 28,
+      "skipped_count": 0,
+      "errors": []
     }
     ```
 
 ---
 
-### 2.3 Queue Management Module
-
-#### GET `/api/v1/queue/live-status/`
-*   **Description:** Poll real-time status of the current ticket serving state.
-*   **Response (200 OK):**
-    ```json
-    {
-      "current_ticket": "A-124",
-      "total_waiting": 18,
-      "avg_wait_mins": 12
-    }
-    ```
-
-#### POST `/api/v1/queue/ticket/`
-*   **Description:** Register a printed queue ticket to link to a resident's mobile phone (triggers QR scan action).
-*   **Payload (JSON):**
-    ```json
-    {
-      "ticket_number": "A-125",
-      "service_type": "document_request"
-    }
-    ```
-*   **Response (201 Created):**
-    ```json
-    {
-      "ticket_id": 435,
-      "ticket_number": "A-125",
-      "status": "WAITING",
-      "created_at": "2026-07-19T22:32:00Z"
-    }
-    ```
-
-#### POST `/api/v1/queue/next/`
-*   **Description:** Move the queue forward to the next ticket (Admin role authorization required). Triggers push notification to the resident.
-*   **Response (200 OK):**
-    ```json
-    {
-      "current_ticket": "A-125",
-      "remaining_waiting": 17
-    }
-    ```
-
----
-
-### 2.4 Document Request Module
+### 2.2 Documents & Clearance Operations Module
 
 #### GET `/api/v1/documents/`
-*   **Description:** Get document request history.
-    *   *Resident:* Returns only the logged-in resident's requests.
-    *   *Admin:* Returns all resident requests in the barangay.
+*   **Description:** List clearance requests. Standard residents see only their own requests; Barangay Officials see digital requests from their barangay plus physical walk-in records.
 *   **Response (200 OK):**
     ```json
     [
       {
-        "id": 12,
+        "id": 105,
+        "is_walkin": false,
+        "requester_name": "Maria Santos",
         "document_type": "Barangay Clearance",
-        "purpose": "Employment Requirement",
-        "status": "PENDING",
+        "purpose": "Local Employment",
+        "status": "RELEASED",
         "urgency_tag": "REGULAR",
-        "admin_notes": ""
+        "or_number": "OR-2026-089",
+        "fee_amount": "50.00",
+        "admin_notes": "Paid at treasury desk."
       }
     ]
     ```
 
 #### POST `/api/v1/documents/`
-*   **Description:** Request a new official document (Resident only).
-*   **Payload (JSON):**
+*   **Description:** Apply for a document clearance. Accessible to both verified residents (self-service) and officials (walk-in clearance creation).
+*   **Payload - Resident Self-Service (JSON):**
     ```json
     {
       "document_type": "Barangay Clearance",
-      "purpose": "Employment Requirement",
+      "purpose": "Passport Application",
       "urgency_tag": "REGULAR"
     }
     ```
-*   **Response (201 Created):**
+*   **Payload - Official Recording Walk-in Clearance (JSON):**
     ```json
     {
-      "id": 13,
       "document_type": "Barangay Clearance",
-      "purpose": "Employment Requirement",
-      "status": "PENDING",
-      "urgency_tag": "REGULAR"
+      "purpose": "Job Application",
+      "walkin_name": "Pedro Penduko",
+      "walkin_purok": "Purok 4",
+      "or_number": "OR-2026-090",
+      "fee_amount": "50.00",
+      "status": "RELEASED",
+      "admin_notes": "Walk-in resident paid at treasury desk."
     }
     ```
+*   **Response (201 Created):** `DocumentRequest` JSON instance.
 
 #### PATCH `/api/v1/documents/<id>/validate/`
-*   **Description:** Validate, approve, reject, or release a request (Admin only). Triggers notification to resident.
+*   **Description:** Official review and treasury recording endpoint (Barangay Official only).
 *   **Payload (JSON):**
     ```json
     {
-      "status": "APPROVED",
-      "admin_notes": "Please pick up this document on Friday."
+      "status": "RELEASED",
+      "or_number": "OR-2026-091",
+      "fee_amount": "50.00",
+      "admin_notes": "Clearance released and fee audited."
     }
     ```
+*   **Response (200 OK):** Updated `DocumentRequest` JSON instance.
+
+#### GET `/api/v1/documents/<id>/generate_pdf/`
+*   **Description:** Generates and streams a legal, print-ready PDF certificate containing official barangay headers, QR control verification, and the Treasury Assessment Slip.
+*   **Response (200 OK):** Binary PDF stream (`Content-Type: application/pdf`).
+
+---
+
+### 2.3 Live Queue Module
+
+#### GET `/api/v1/queue/live-status/`
+*   **Description:** Returns the active serving ticket and remaining waiting count strictly for the authenticated user's assigned barangay.
 *   **Response (200 OK):**
     ```json
     {
-      "id": 13,
-      "status": "APPROVED",
-      "admin_notes": "Please pick up this document on Friday."
+      "current_ticket": "T008",
+      "total_waiting": 4,
+      "avg_wait_mins": 8
+    }
+    ```
+
+#### POST `/api/v1/queue/next/`
+*   **Description:** Advances the queue. Marks the currently serving ticket in the official's barangay as `COMPLETED`, transitions the next waiting ticket to `SERVING`, and broadcasts a WebSocket update (Barangay Official only).
+*   **Response (200 OK):**
+    ```json
+    {
+      "current_ticket": "T009",
+      "remaining_waiting": 3
     }
     ```
 
 ---
 
-### 2.5 Issue Reports Module
+### 2.4 Executive Dashboard Analytics Module
 
-#### POST `/api/v1/reports/submit/`
-*   **Description:** Submit an issue report with image data (`multipart/form-data` payload format).
-*   **Payload (Multipart Form):**
-    *   `title` (text)
-    *   `description` (text)
-    *   `location` (text)
-    *   `image_attachment` (binary file)
-*   **Response (201 Created):**
-    ```json
-    {
-      "report_id": 98,
-      "title": "Broken Streetlight Main Road",
-      "status": "PENDING",
-      "image_url": "https://res.cloudinary.com/gridy/image/upload/v1234/report_98.jpg"
-    }
-    ```
-
----
-
-### 2.6 Activity Schedule Module
-
-#### GET `/api/v1/activities/`
-*   **Description:** List community activities and events (Filtered by user's barangay).
+#### GET `/api/v1/dashboard/summary/`
+*   **Description:** Multi-metric analytics endpoint providing pre-calculated aggregations for executive desks (Barangay Official only).
 *   **Response (200 OK):**
     ```json
-    [
-      {
-        "id": 1,
-        "title": "Barangay Assembly",
-        "description": "Quarterly community meeting.",
-        "event_datetime": "2026-10-15T09:00:00Z",
-        "location": "Barangay Covered Court",
-        "created_by": 2,
-        "created_at": "2026-09-01T08:00:00Z"
+    {
+      "total_residents": 482,
+      "document_requests": {
+        "total": 64,
+        "pending": 5,
+        "approved": 2,
+        "rejected": 1,
+        "released": 56,
+        "total_revenue": 2800.00
+      },
+      "issue_reports": {
+        "total": 18,
+        "pending": 3,
+        "in_progress": 2,
+        "resolved": 13,
+        "urgency_breakdown": {
+          "minor": 8,
+          "moderate": 5,
+          "hazard": 3,
+          "emergency": 2
+        },
+        "category_breakdown": {
+          "peace_and_order": 4,
+          "public_health": 3,
+          "infrastructure": 8,
+          "environment": 2,
+          "other": 1
+        }
+      },
+      "demographics": {
+        "purok_distribution": {
+          "Purok 1": 120,
+          "Purok 2": 95,
+          "Purok 3": 110,
+          "Purok 4": 85,
+          "Purok 5": 72
+        },
+        "age_demographics": {
+          "youth": 124,
+          "young_adult": 168,
+          "adult": 140,
+          "senior": 50
+        }
+      },
+      "queue_activity": {
+        "serving_now": "T008",
+        "waiting_in_queue": 4
       }
-    ]
-    ```
-
-#### POST `/api/v1/activities/`
-*   **Description:** Create a new community event (Barangay Official only).
-*   **Payload (JSON):**
-    ```json
-    {
-      "title": "Medical Mission 2026",
-      "description": "Free consultations and medicines.",
-      "event_datetime": "2026-10-20T08:00:00Z",
-      "location": "Health Center"
     }
     ```
-*   **Response (201 Created):**
-    ```json
-    {
-      "id": 2,
-      "title": "Medical Mission 2026",
-      "description": "Free consultations and medicines.",
-      "event_datetime": "2026-10-20T08:00:00Z",
-      "location": "Health Center"
-    }
-    ```
-
-#### DELETE `/api/v1/activities/<id>/`
-*   **Description:** Cancel/delete a scheduled event (Barangay Official only).
-*   **Response:** `204 No Content`
 
 ---
 
-### 2.7 Emergency Hotlines Module
+### 2.5 System Health & Observability
 
-#### GET `/api/v1/hotlines/`
-*   **Description:** Retrieve emergency hotlines for the citizen's barangay.
+#### GET `/api/health/`
+*   **Description:** System heartbeat and multi-service dependency health probe per ADR 001. Checks PostgreSQL connection, Redis latency, and Celery worker connectivity.
 *   **Response (200 OK):**
     ```json
-    [
-      {
-        "id": 1,
-        "name": "Barangay Police Desk",
-        "number": "09171234567",
-        "category": "POLICE",
-        "category_display": "Police",
-        "is_active": true
+    {
+      "status": "healthy",
+      "services": {
+        "database": {
+          "status": "healthy",
+          "latency_ms": 2.4
+        },
+        "cache": {
+          "status": "healthy",
+          "latency_ms": 0.8
+        },
+        "celery": {
+          "status": "healthy"
+        }
       }
-    ]
-    ```
-
-#### POST `/api/v1/hotlines/`
-*   **Description:** Register a new emergency hotline (Barangay Official only).
-*   **Payload (JSON):**
-    ```json
-    {
-      "name": "Barangay Health Center",
-      "number": "(02) 8123-4567",
-      "category": "MEDICAL",
-      "is_active": true
     }
     ```
-*   **Response (201 Created):**
-    ```json
-    {
-      "id": 2,
-      "name": "Barangay Health Center",
-      "number": "(02) 8123-4567",
-      "category": "MEDICAL",
-      "category_display": "Medical / Hospital",
-      "is_active": true
-    }
-    ```
-
-#### DELETE `/api/v1/hotlines/<id>/`
-*   **Description:** Remove an emergency hotline entry (Barangay Official only).
-*   **Response:** `204 No Content`

@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from asgiref.sync import async_to_sync
@@ -72,9 +72,11 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='live-status')
     def live_status(self, request):
-        serving_ticket = QueueTicket.objects.filter(status=QueueTicket.Status.SERVING).first()
-        total_waiting = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING).count()
-        
+        user = request.user
+        barangay_filter = {'barangay': user.barangay} if (user and user.is_authenticated) else {}
+        serving_ticket = QueueTicket.objects.filter(status=QueueTicket.Status.SERVING, **barangay_filter).first()
+        total_waiting = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING, **barangay_filter).count()
+
         return Response({
             "current_ticket": serving_ticket.ticket_number if serving_ticket else None,
             "total_waiting": total_waiting,
@@ -84,8 +86,15 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsBarangayOfficialOrField], url_path='next')    
     def next_ticket(self, request):
         with transaction.atomic():
-            QueueTicket.objects.filter(status=QueueTicket.Status.SERVING).update(status=QueueTicket.Status.COMPLETED)
-            next_ticket = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING).order_by('-is_priority', 'created_at').first()
+            QueueTicket.objects.filter(
+                barangay=request.user.barangay, 
+                status=QueueTicket.Status.SERVING
+            ).update(status=QueueTicket.Status.COMPLETED)
+            
+            next_ticket = QueueTicket.objects.filter(
+                barangay=request.user.barangay, 
+                status=QueueTicket.Status.WAITING
+            ).order_by('-is_priority', 'created_at').first()
             
             if not next_ticket:
                 return Response({"detail": "No tickets waiting in queue."}, status=status.HTTP_404_NOT_FOUND)
@@ -108,7 +117,10 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
                     data={"ticket_id": str(next_ticket.id)}
                 )
             
-            remaining_waiting = QueueTicket.objects.filter(status=QueueTicket.Status.WAITING).count()
+            remaining_waiting = QueueTicket.objects.filter(
+                barangay=request.user.barangay, 
+                status=QueueTicket.Status.WAITING
+            ).count()
             broadcast_queue_update()
 
             return Response({
@@ -132,14 +144,17 @@ class DashboardSummaryView(APIView):
         # 1. Total Residents for this Barangay (1 query)
         total_res = User.objects.filter(role=User.Role.RESIDENT, barangay=user.barangay).count()
 
-        # 2. Document Request Statistics (1 SINGLE AGGREGATE QUERY instead of 5)
-        doc_stats = DocumentRequest.objects.filter(user__barangay=user.barangay).aggregate(
-            total=Count('id'),
-            pending=Count('id', filter=Q(status=DocumentRequest.Status.PENDING)),
-            approved=Count('id', filter=Q(status=DocumentRequest.Status.PROCESSING)),
-            rejected=Count('id', filter=Q(status=DocumentRequest.Status.REJECTED)),
-            released=Count('id', filter=Q(status=DocumentRequest.Status.RELEASED)),
-        )
+        # 2. Document Request Statistics (Include digital resident and walk-in records)
+        doc_stats = DocumentRequest.objects.filter(
+            Q(user__barangay=user.barangay) | Q(barangay=user.barangay)
+            ).aggregate(
+                total=Count('id'),
+                pending=Count('id', filter=Q(status=DocumentRequest.Status.PENDING)),
+                approved=Count('id', filter=Q(status=DocumentRequest.Status.PROCESSING)),
+                rejected=Count('id', filter=Q(status=DocumentRequest.Status.REJECTED)),
+                released=Count('id', filter=Q(status=DocumentRequest.Status.RELEASED)),
+                revenue=Sum('fee_amount', filter=Q(status=DocumentRequest.Status.RELEASED)),
+            )
 
         # 3. Issue Reports Statistics, Urgency & Category Breakdown (1 SINGLE AGGREGATE QUERY instead of 15)
         issue_stats = IssueReport.objects.filter(reporter__barangay=user.barangay).aggregate(
@@ -173,7 +188,7 @@ class DashboardSummaryView(APIView):
         
         if purok_stats.exists():
             purok_distribution = {
-                f"Purok {item['purok']}": item['count']
+                item['purok'] if str(item['purok']).lower().startswith('purok') else f"Purok {item['purok']}": item['count']
                 for item in purok_stats
             }
         else:
@@ -239,6 +254,7 @@ class DashboardSummaryView(APIView):
                 "approved": doc_stats['approved'] or 0,
                 "rejected": doc_stats['rejected'] or 0,
                 "released": doc_stats['released'] or 0,
+                "total_revenue": float(doc_stats['revenue'] or 0.0)
             },
             "issue_reports": {
                 "total": issue_stats['total'] or 0,
