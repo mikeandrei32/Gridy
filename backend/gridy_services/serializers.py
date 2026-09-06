@@ -73,6 +73,7 @@ class DocumentStatsSerializer(serializers.Serializer):
     approved = serializers.IntegerField()
     rejected = serializers.IntegerField()
     released = serializers.IntegerField()
+    total_revenue = serializers.FloatField(required=False, default=0.0)
 
 class UrgencyBreakdownSerializer(serializers.Serializer):
     low = serializers.IntegerField()
