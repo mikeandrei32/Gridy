@@ -172,4 +172,64 @@ Per **ADR 002 (HttpOnly Cookie Authentication)**, refresh tokens are never retur
         "pending": 3,
         "in_progress": 2,
         "resolved": 13,
-        "urgency_
+        "urgency_breakdown": {
+          "minor": 8,
+          "moderate": 5,
+          "hazard": 3,
+          "emergency": 2
+        },
+        "category_breakdown": {
+          "peace_and_order": 4,
+          "public_health": 3,
+          "infrastructure": 8,
+          "environment": 2,
+          "other": 1
+        }
+      },
+      "demographics": {
+        "purok_distribution": {
+          "Purok 1": 120,
+          "Purok 2": 95,
+          "Purok 3": 110,
+          "Purok 4": 85,
+          "Purok 5": 72
+        },
+        "age_demographics": {
+          "youth": 124,
+          "young_adult": 168,
+          "adult": 140,
+          "senior": 50
+        }
+      },
+      "queue_activity": {
+        "serving_now": "T008",
+        "waiting_in_queue": 4
+      }
+    }
+    ```
+
+---
+
+### 2.5 System Health & Observability
+
+#### GET `/api/health/`
+*   **Description:** System heartbeat and multi-service dependency health probe per ADR 001. Checks PostgreSQL connection, Redis latency, and Celery worker connectivity.
+*   **Response (200 OK):**
+    ```json
+    {
+      "status": "healthy",
+      "services": {
+        "database": {
+          "status": "healthy",
+          "latency_ms": 2.4
+        },
+        "cache": {
+          "status": "healthy",
+          "latency_ms": 0.8
+        },
+        "celery": {
+          "status": "healthy"
+        }
+      }
+    }
+    ```
