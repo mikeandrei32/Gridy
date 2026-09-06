@@ -70,6 +70,7 @@ class ResidentImportView(APIView):
                     full_name = row.get('full_name')
                     birth_date_str = row.get('birth_date')
                     contact_number = row.get('contact_number', '')
+                    purok = row.get('purok', '')
                     voter_status_str = row.get('voter_status', 'False')
                     
                     if not username or not full_name or not birth_date_str:
@@ -88,14 +89,26 @@ class ResidentImportView(APIView):
 
                     voter_status = voter_status_str.strip().lower() in ['true', '1', 'yes']
                     initial_password = birth_date.strftime('%Y%m%d')
-
+                    
+                    # 1. Create User bound strictly to the importing official's Barangay
+                    
                     user = User.objects.create_user(
-                        username=username, email=email, password=initial_password, role=User.Role.RESIDENT
+                        username=username, 
+                        email=email, 
+                        password=initial_password, 
+                        role=User.Role.RESIDENT,
+                        barangay=request.user.barangay
                     )
 
+                    # 2. Create Resident Profile pre-verified from official Census / RBI records
                     Resident.objects.create(
-                        user=user, full_name=full_name, birth_date=birth_date,
-                        voter_status=voter_status, contact_number=contact_number,
+                        user=user, 
+                        full_name=full_name, 
+                        birth_date=birth_date,
+                        voter_status=voter_status, 
+                        contact_number=contact_number,
+                        purok=purok.strip() if purok else None,
+                        is_verified=True
                     )
                     imported_count += 1
         except Exception as e:
