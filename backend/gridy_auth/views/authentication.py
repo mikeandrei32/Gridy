@@ -162,32 +162,29 @@ class CustomTokenRefreshView(TokenRefreshView):
 class LogoutView(APIView):
     permission_classes = [permissions.AllowAny]
 
-    @extend_schema(request=None, responses={204: None})
+    @extend_schema(request=None, responses={200: None})
     def post(self, request, *args, **kwargs):
-        refresh_token_str = request.COOKIES.get('refresh_token')
-        if not refresh_token_str:
-            return Response({"detail": "No active session cookie found."}, status=status.HTTP_400_BAD_REQUEST)
+        refresh_token_str = request.COOKIES.get('refresh_token') or request.data.get('refresh')
+        if refresh_token_str:
+            try:
+                token = RefreshToken(refresh_token_str)
+                jti = token['jti']
 
-        try:
-            token = RefreshToken(refresh_token_str)
-            jti = token['jti']
+                # Revoke the session in database
+                session = RefreshSession.objects.filter(refresh_token_jti=jti, is_revoked=False).first()
+                if session:
+                    session.is_revoked = True
+                    session.save()
 
-            # Revoke the session in database
-            session = RefreshSession.objects.filter(refresh_token_jti=jti, is_revoked=False).first()
+                # Blacklist token in outstanding database
+                token.blacklist()
+            except Exception:
+                pass
 
-            if session:
-                session.is_revoked = True
-                session.save()
-
-            # Blacklist token in outstanding database
-            token.blacklist()
-        except Exception:
-            pass
-
+        # Always return 200 and clear the cookie
         response = Response({"detail": "Successfully logged out."}, status=status.HTTP_200_OK)
         response.delete_cookie('refresh_token')
         return response
-    
     
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]

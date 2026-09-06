@@ -20,7 +20,8 @@ class DocumentRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentRequestSerializer
     
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        # Authenticated users can list, view, and download their own approved PDFs
+        if self.action in ['list', 'retrieve', 'generate_pdf']:
             return [permissions.IsAuthenticated()]
         if self.action == 'create':
             return [IsResident()]
