@@ -43,15 +43,32 @@ class ServiceAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(DocumentRequest.objects.count(), 1)   
           
-    def test_official_cannot_create_document_request(self):
-        # Officials are strictly for validating/approving, not filing resident clearance requests
+    def test_official_can_create_walkin_document_request(self):
+        # Officials can record walk-in clearances by specifying walkin_name
         self.client.force_login(self.official)
         url = reverse('document-request-list')
         payload = {
             "document_type": "Barangay Clearance",
+            "walkin_name": "Juan Dela Cruz",
+            "walkin_purok": "Purok 3",
+            "or_number": "OR-2026-001",
+            "fee_amount": "50.00"
         }
         response = self.client.post(url, payload, format='json')
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data.get('is_walkin'))
+        self.assertEqual(response.data.get('requester_name'), "Juan Dela Cruz")
+        self.assertEqual(response.data.get('or_number'), "OR-2026-001")
+
+    def test_official_creating_walkin_requires_name(self):
+        # Walk-in submissions without a resident name are rejected with 400
+        self.client.force_login(self.official)
+        url = reverse('document-request-list')
+        payload = {
+            "document_type": "Barangay Clearance"
+        }
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_unverified_resident_cannot_create_document_request(self):
         # Residents who have not yet had their identity/residency verified by the barangay are blocked

@@ -4,6 +4,7 @@ from .models import DocumentRequest, QueueTicket
 class DocumentRequestSerializer(serializers.ModelSerializer):
     request_id = serializers.IntegerField(source='id', read_only=True)
     requester_name = serializers.SerializerMethodField()
+    purok = serializers.SerializerMethodField()
     
     class Meta:
         model = DocumentRequest
@@ -11,19 +12,32 @@ class DocumentRequestSerializer(serializers.ModelSerializer):
             'id',
             'request_id',
             'requester_name',
+            'purok',
+            'is_walkin',
+            'walkin_name',
+            'walkin_purok',
             'document_type',
             'purpose',
             'urgency_tag',
             'status',
             'admin_notes',
+            'or_number',
+            'fee_amount',
             'created_at',
             'updated_at',
         ]
         read_only_fields = ['created_at', 'updated_at']
 
     def get_requester_name(self, obj) -> str:
-        user = obj.user
-        return getattr(user.profile, 'full_name', user.username) if hasattr(user,'profile') else user.username
+        if obj.user:
+            return getattr(obj.user.profile, 'full_name', obj.user.username) if hasattr(obj.user,'profile') else obj.user.username
+        return obj.walkin_name if obj.walkin_name else "Walk-in Resident"
+    
+    def get_purok(self, obj) -> str:
+        if obj.user and hasattr(obj.user, 'profile') and obj.user.profile.purok:
+            return str(obj.user.profile.purok)
+        return str(obj.walkin_purok) if obj.walkin_purok else "N/A"
+            
 
 class QueueTicketSerializer(serializers.ModelSerializer):
     ticket_id = serializers.IntegerField(source='id', read_only=True)

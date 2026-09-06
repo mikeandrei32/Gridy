@@ -23,8 +23,22 @@ class DocumentRequest(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='document_requests'
     )
+    barangay = models.ForeignKey(
+        Barangay,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='document_requests'
+    )
+    # Walk-in & Legacy Support
+    is_walkin = models.BooleanField(default=False, db_index=True)
+    walkin_name = models.CharField(max_length=255, blank=True, null=True)
+    walkin_purok = models.CharField(max_length=100, blank=True, null=True)
+
     document_type = models.CharField(max_length=100)
     purpose = models.TextField(blank=True, null=True)
     urgency_tag = models.CharField(
@@ -38,15 +52,22 @@ class DocumentRequest(models.Model):
         default=Status.PENDING,
     )
     admin_notes = models.TextField(blank=True, null=True)
+
+    # Official Receipt (OR) & Fee Auditing
+    or_number = models.CharField(max_length=50, blank=True, null=True, help_text="Official Receipt Number issued by Barangay Treasurer")
+    fee_amount = models.DecimalField(max_digits=8, decimal_places=2, default=0.00, help_text="Clearance issuance fee in PHP")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.document_type} - {self.user.username} ({self.status})"
+        applicant = self.user.username if self.user else f"Walk-in: {self.walkin_name}"
+        return f"{self.document_type} - {applicant} ({self.status})"
 
     class Meta:
         indexes = [
             models.Index(fields=['user', 'status']),
+            models.Index(fields=['barangay', 'status']),
             models.Index(fields=['status']),
         ]
 

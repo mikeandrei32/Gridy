@@ -96,6 +96,12 @@
     <div class="content">
         <p><strong>TO WHOM IT MAY CONCERN:</strong></p>
         <p>
+            This is to certify that <strong>{{ recipient_name|upper }}</strong>, 
+            {% if age %}of legal age ({{ age }} years old),{% endif %}
+            residing at Purok <strong>{{ purok_name }}</strong>, {{ barangay.name }},
+            is a bonafide resident of this Barangay and has verified records on file.
+        </p>
+        <p>
             This certification is being issued upon the request of the above-named person for
             {% if document.purpose %}
             the purpose of <strong>{{ document.purpose }}</strong>.
@@ -104,23 +110,34 @@
             {% endif %}
         </p>
         <p>
-            This certification is being issued upon the request of the above-named person for whatever legal purpose it
-            may serve.
-        </p>
-        <p>
             Issued this <strong>{{ date_issued|date:"jS \d\a\y \o\f F Y" }}</strong> at {{ barangay.name }}.
         </p>
     </div>
 
-    <div class="signature-block">
-        <div class="signature-right">
-            <div class="signature-line">
-                {{ barangay.captain_name|default:"PUNONG BARANGAY"|upper }}<br />
-                <span style="font-weight: normal; font-size: 12pt;">Punong Barangay</span>
-            </div>
-        </div>
-    </div>
+    <!-- Official Assessment & Signature Block -->
+    <table width="100%" style="margin-top: 50px;">
+        <tr>
+            <!-- Official Assessment Slip (O.R. No. & Accounting Details) -->
+            <td width="50%" valign="bottom">
+                <div style="border: 1px solid #333; padding: 10px; font-size: 10pt; width: 85%;">
+                    <strong style="font-size: 10pt; text-decoration: underline;">OFFICIAL ASSESSMENT</strong><br />
+                    <span>Control / Doc ID: #{{ document.id }}</span><br />
+                    <span>O.R. Number: <strong>{{ document.or_number|default:"N/A" }}</strong></span><br />
+                    <span>Amount Paid: <strong>PHP {{ document.fee_amount|default:"0.00" }}</strong></span><br />
+                    <span>Date Issued: {{ date_issued|date:"Y-m-d" }}</span>
+                </div>
+            </td>
 
-</body>
+            <!-- Punong Barangay Signature -->
+            <td width="50%" align="right" valign="bottom">
+                <div style="text-align: center; width: 220px; float: right;">
+                    <div class="signature-line">
+                        {{ barangay.captain_name|default:"PUNONG BARANGAY"|upper }}<br />
+                        <span style="font-weight: normal; font-size: 11pt;">Punong Barangay</span>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
 </html>
