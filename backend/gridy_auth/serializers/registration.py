@@ -11,11 +11,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     birth_date = serializers.DateField(write_only=True)
     voter_status = serializers.BooleanField(write_only=True, default=False)
     contact_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    barangay_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
     guardian_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'full_name', 'birth_date', 'voter_status', 'contact_number', 'guardian_id']
+        fields = ['username', 'email', 'password', 'full_name', 'birth_date', 'voter_status', 'contact_number', 'barangay_id', 'guardian_id']
 
     # 1. This validates JUST the password
     def validate_password(self, value):
@@ -40,6 +41,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         if age is not None and age < 18 and not guardian_id:
             raise serializers.ValidationError({"guardian_id": "Residents under 18 must provide a guardian's Registered ID."})
         
+        barangay_id = attrs.get('barangay_id')
+        if barangay_id:
+            try:
+                attrs['barangay_obj'] = Barangay.objects.get(id=barangay_id)
+            except Barangay.DoesNotExist:
+                raise serializers.ValidationError({"barangay_id": "Selected Barangay does not exist."})
+            
         # Validate Guardian ID mapping
         if guardian_id:
             try:
@@ -58,18 +66,22 @@ class RegisterSerializer(serializers.ModelSerializer):
             'birth_date': validated_data.pop('birth_date'),
             'voter_status': validated_data.pop('voter_status', False),
             'contact_number': validated_data.pop('contact_number', ''),
+            'purok': validated_data.pop('purok', None),
         }
 
         # Extract the resolved guardian Resident objects
         guardian_resident = validated_data.pop('guardian_resident', None)
         validated_data.pop('guardian_id', None)
+        barangay_obj = validated_data.pop('barangay_obj', None)
+        validated_data.pop('barangay_id', None)
 
         with transaction.atomic():
             user = User.objects.create_user(
                 username=validated_data['username'],
                 email=validated_data.get('email', ''),
                 password=validated_data['password'],
-                role=User.Role.RESIDENT
+                role=User.Role.RESIDENT,
+                barangay=barangay_obj
             )
             Resident.objects.create(user=user, guardian=guardian_resident, **profile_data)
 

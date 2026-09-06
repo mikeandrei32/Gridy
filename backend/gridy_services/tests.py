@@ -2,7 +2,7 @@ from gridy_reports.models import IssueReport
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-from gridy_auth.models import User
+from gridy_auth.models import User, Resident
 from gridy_services.models import DocumentRequest, QueueTicket
 from gridy_audit.models import AuditLog
 from unittest.mock import patch
@@ -18,12 +18,18 @@ class ServiceAPITests(APITestCase):
             email="admin@example.com",
             role=User.Role.ADMIN
         )
-        # Create a resident
+        # Create a verified resident
         self.resident = User.objects.create_user(
             username="resident_test",
             password="SecurePassword123!",
             email="resident@example.com",
             role=User.Role.RESIDENT
+        )
+        Resident.objects.create(
+            user=self.resident,
+            full_name="Resident Test",
+            birth_date="1995-05-15",
+            is_verified=True
         )
     
     # Example 1: Resident successfully requests a document
@@ -44,6 +50,26 @@ class ServiceAPITests(APITestCase):
         payload = {
             "document_type": "Barangay Clearance",
         }
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        
+    def test_unverified_resident_cannot_create_document_request(self):
+        # Residents who have not yet had their identity/residency verified by the barangay are blocked
+        unverified_user = User.objects.create_user(
+            username="unverified_resident",
+            password="SecurePassword123!",
+            email="unverified@example.com",
+            role=User.Role.RESIDENT
+        )
+        Resident.objects.create(
+            user=unverified_user,
+            full_name="Unverified Resident",
+            birth_date="1998-08-20",
+            is_verified=False
+        )
+        self.client.force_login(unverified_user)
+        url = reverse('document-request-list')
+        payload = {"document_type": "Barangay Clearance"}
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
