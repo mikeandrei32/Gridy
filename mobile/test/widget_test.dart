@@ -24,7 +24,7 @@ void main() {
     expect(find.text('Welcome Back'), findsOneWidget);
     expect(find.text('CITIZEN ID / USERNAME'), findsOneWidget);
     expect(find.text('PASSWORD'), findsOneWidget);
-    expect(find.text('Login to'), findsOneWidget);
+    expect(find.text('Sign In to Citizen Portal'), findsOneWidget);
     expect(find.text('Forgot ID?'), findsOneWidget);
   });
 
@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Find and tap the submit button
-    final loginButton = find.text('Login to');
+    final loginButton = find.text('Sign In to Citizen Portal');
     expect(loginButton, findsOneWidget);
     await tester.tap(loginButton);
     await tester.pumpAndSettle();
