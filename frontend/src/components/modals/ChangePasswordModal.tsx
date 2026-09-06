@@ -4,157 +4,157 @@ import { axiosPrivate } from '../../api/axios';
 
 
 interface Props {
-    isOpen: boolean
-    onClose: () => void
-    onSuccess: () => void
+        isOpen: boolean
+        onClose: () => void
+        onSuccess: () => void
 }
 
 export const ChangePasswordModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
-    const [oldPassword, setOldPassword] = useState('')
-    const [newPassword, setNewPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
+        const [oldPassword, setOldPassword] = useState('')
+        const [newPassword, setNewPassword] = useState('')
+        const [confirmPassword, setConfirmPassword] = useState('')
 
-    const [showOld, setShowOld] = useState(false)
-    const [showNew, setShowNew]= useState(false)
+        const [showOld, setShowOld] = useState(false)
+        const [showNew, setShowNew]= useState(false)
 
-    const [isLoading, setIsLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
+        const [isLoading, setIsLoading] = useState(false)
+        const [error, setError] = useState<string | null>(null)
 
-    if(!isOpen) return null
+        if(!isOpen) return null
 
-    const handleSubmit = async (e: React.SubmitEvent<HTMLElement>) => {
-        e.preventDefault()
-        setError(null)
+        const handleSubmit = async (e: React.SubmitEvent<HTMLElement>) => {
+                e.preventDefault()
+                setError(null)
 
-        if(newPassword !== confirmPassword) {
-            setError("New passwords do not march.")
-            return
+                if(newPassword !== confirmPassword) {
+                        setError("New passwords do not march.")
+                        return
+                }
+
+                setIsLoading(true)
+                try {
+                        await axiosPrivate.patch('/auth/change-password/', {
+                                old_password: oldPassword,
+                                new_password: newPassword
+                        })
+                        onSuccess()
+                } catch (err: any) {
+                        // Extract the first error message from the DRF response
+                        if (err.response?.data) {
+                                const data = err.response.data
+                                if (data.old_password) setError(data.old_password[0])
+                                else if (data.new_password) setError(data.new_password[0])
+                                else if (data.non_field_errors) setError(data.non_field_errors[0])
+                        } else {
+                                setError("Network error occurred.")    
+                        }
+                } finally {
+                        setIsLoading(false)
+                }
         }
 
-        setIsLoading(true)
-        try {
-            await axiosPrivate.patch('/auth/change-password/', {
-                old_password: oldPassword,
-                new_password: newPassword
-            })
-            onSuccess()
-        } catch (err: any) {
-            // Extract the first error message from the DRF response
-            if (err.response?.data) {
-                const data = err.response.data
-                if (data.old_password) setError(data.old_password[0])
-                else if (data.new_password) setError(data.new_password[0])
-                else if (data.non_field_errors) setError(data.non_field_errors[0])
-            } else {
-                setError("Network error occurred.")    
-            }
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    return (
-    <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
-        role="dialog" 
-        aria-modal="true" 
-        aria-labelledby="modal-title"
-    >
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-100">
-          <h2 id="modal-title" className="text-xl font-bold text-slate-900">Change Password</h2>
-          <button 
-              onClick={onClose} 
-              aria-label="Close dialog"
-              className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </button>
+        return (
+        <div 
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm"
+                role="dialog" 
+                aria-modal="true" 
+                aria-labelledby="modal-title"
+        >
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-slate-100">
+                    <h2 id="modal-title" className="text-xl font-bold text-slate-900">Change Password</h2>
+                    <button 
+                            onClick={onClose} 
+                            aria-label="Close dialog"
+                            className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                        <X className="w-5 h-5" aria-hidden="true" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    {error && (
+                        <div role="alert" className="flex items-start gap-3 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
+                            <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
+                            <p>{error}</p>
+                        </div>
+                    )}
+                    <div>
+                        <label htmlFor="old-password" className="block text-sm font-semibold text-slate-700 mb-1">Current Password</label>
+                        <div className="relative">
+                            <input
+                                id="old-password"
+                                type={showOld ? "text" : "password"}
+                                value={oldPassword}
+                                onChange={(e) => setOldPassword(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowOld(!showOld)}
+                                aria-label={showOld ? "Hide current password" : "Show current password"}
+                                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                            >
+                                {showOld ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label htmlFor="new-password" className="block text-sm font-semibold text-slate-700 mb-1">New Password</label>
+                        <div className="relative">
+                            <input
+                                id="new-password"
+                                type={showNew ? "text" : "password"}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                required
+                                minLength={8}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowNew(!showNew)}
+                                aria-label={showNew ? "Hide new password" : "Show new password"}
+                                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                            >
+                                {showNew ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label htmlFor="confirm-password" className="block text-sm font-semibold text-slate-700 mb-1">Confirm New Password</label>
+                        <input
+                            id="confirm-password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                            required
+                        />
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading || !oldPassword || !newPassword || !confirmPassword}
+                            className="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isLoading ? 'Updating...' : (
+                                <>
+                                    <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                                    Update Password
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div role="alert" className="flex items-start gap-3 p-3 bg-red-50 text-red-700 rounded-lg text-sm border border-red-100">
-              <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
-              <p>{error}</p>
-            </div>
-          )}
-          <div>
-            <label htmlFor="old-password" className="block text-sm font-semibold text-slate-700 mb-1">Current Password</label>
-            <div className="relative">
-              <input
-                id="old-password"
-                type={showOld ? "text" : "password"}
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowOld(!showOld)}
-                aria-label={showOld ? "Hide current password" : "Show current password"}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-              >
-                {showOld ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="new-password" className="block text-sm font-semibold text-slate-700 mb-1">New Password</label>
-            <div className="relative">
-              <input
-                id="new-password"
-                type={showNew ? "text" : "password"}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                required
-                minLength={8}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNew(!showNew)}
-                aria-label={showNew ? "Hide new password" : "Show new password"}
-                className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
-              >
-                {showNew ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
-              </button>
-            </div>
-          </div>
-          <div>
-            <label htmlFor="confirm-password" className="block text-sm font-semibold text-slate-700 mb-1">Confirm New Password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-              required
-            />
-          </div>
-          <div className="pt-4 flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading || !oldPassword || !newPassword || !confirmPassword}
-              className="flex-1 px-4 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {isLoading ? 'Updating...' : (
-                <>
-                  <CheckCircle className="w-4 h-4" aria-hidden="true" />
-                  Update Password
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+    );
 }

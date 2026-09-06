@@ -5,7 +5,7 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-background text-slate-900 antialiased;
-  }
+    body {
+        @apply bg-background text-slate-900 antialiased;
+    }
 }
