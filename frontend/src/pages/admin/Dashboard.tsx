@@ -7,43 +7,43 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveCo
 interface DashboardSummary {
     total_residents: number;
     document_requests: {
-        total: number;
-        pending: number;
-        approved: number;
-        rejected: number;
-        released: number;
-        total_revenue?: number;
+    total: number;
+    pending: number;
+    approved: number;
+    rejected: number;
+    released: number;
+    total_revenue?: number
     };
     issue_reports: {
-        total: number;
-        pending: number;
-        in_progress: number;
-        resolved: number;
-        urgency_breakdown: {
-            low: number;
-            medium: number;
-            high: number;
-            urgent: number;
-        };
-        scenario_breakdown: {
-            peace_and_order: number;
-            public_health: number;
-            infrastructure: number;
-            environment: number;
-            other: number;
-        };
+    total: number;
+    pending: number;
+    in_progress: number;
+    resolved: number;
+    urgency_breakdown: {
+        low: number;
+        medium: number;
+        high: number;
+        urgent: number;
+    };
+    scenario_breakdown: {
+        peace_and_order: number;
+        public_health: number;
+        infrastructure: number;
+        environment: number;
+        other: number;
+    };
         time_of_day: {
             night_time: number;
             day_time: number;
-        };
+        }
     };
-    queue_activity: {
+        queue_activity: {
         total_today: number;
         serving_now: string | null;
         waiting_count: number;
     };
     demographics?: {
-        purok_distribution: Record<string, number>;
+        purok_distribution: Record<string, number>
         age_demographics: {
             youth: number;
             young_adult: number;
@@ -76,18 +76,18 @@ const MetricCardSkeleton = () => (
 );
 
 const ChartSkeleton = ({ title }: { title?: string }) => (
-<div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0]/80 animate-pulse">
-<div className="h-5 w-48 bg-slate-200 rounded mb-6">
-    {title && <span className="sr-only">{title}</span>}
-</div>
-<div className="h-[250px] w-full bg-slate-100 rounded-xl flex items-end justify-between px-4 pb-4">
-    <div className="w-12 h-[60%] bg-slate-200 rounded-t-sm"></div>
-    <div className="w-12 h-[80%] bg-slate-200 rounded-t-sm"></div>
-    <div className="w-12 h-[40%] bg-slate-200 rounded-t-sm"></div>
-    <div className="w-12 h-[100%] bg-slate-200 rounded-t-sm"></div>
-    <div className="w-12 h-[30%] bg-slate-200 rounded-t-sm"></div>
-</div>
-</div>
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#E2E8F0]/80 animate-pulse">
+        <div className="h-5 w-48 bg-slate-200 rounded mb-6">
+            {title && <span className="sr-only">{title}</span>}
+        </div>
+        <div className="h-[250px] w-full bg-slate-100 rounded-xl flex items-end justify-between px-4 pb-4">
+            <div className="w-12 h-[60%] bg-slate-200 rounded-t-sm"></div>
+            <div className="w-12 h-[80%] bg-slate-200 rounded-t-sm"></div>
+            <div className="w-12 h-[40%] bg-slate-200 rounded-t-sm"></div>
+            <div className="w-12 h-[100%] bg-slate-200 rounded-t-sm"></div>
+            <div className="w-12 h-[30%] bg-slate-200 rounded-t-sm"></div>
+        </div>
+    </div>
 );
 
 import { useAuth } from '../../context/AuthContext';
@@ -110,7 +110,7 @@ export const Dashboard: React.FC = () => {
                 axiosPrivate.get('/dashboard/summary/', { signal: controller.signal }),
                 axiosPrivate.get('/activities/', { signal: controller.signal })
             ]);
-
+                    
             if (isMounted) {
                 if (summaryRes.status === 'fulfilled') {
                     setSummaryData(summaryRes.value.data);
@@ -412,5 +412,5 @@ export const Dashboard: React.FC = () => {
                 </div>
             </div>
         </div>
-    );
-};
+    );  
+}
