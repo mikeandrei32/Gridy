@@ -99,7 +99,7 @@ export const Notifications: React.FC = () => {
     try {
       const date = new Date(isoString);
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + date.toLocaleDateString();
-    } catch (_) {
+    } catch {
       return isoString;
     }
   };

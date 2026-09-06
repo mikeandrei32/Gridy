@@ -46,7 +46,7 @@ export const CitizenDocuments: React.FC = () => {
       const res = await axiosPrivate.get('/document-requests/');
       const data = res.data.results || res.data;
       setRequests(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch {
       toast.error('Failed to load your document requests.');
     } finally {
       setLoading(false);
@@ -57,7 +57,7 @@ export const CitizenDocuments: React.FC = () => {
     fetchRequests();
   }, []);
 
-  const handleCreateRequest = async (e: React.FormEvent) => {
+  const handleCreateRequest = async (e: React.SubmitEvent<HTMLElement>) => {
     e.preventDefault();
     if (!purpose.trim()) {
       toast.error('Please specify a valid purpose for this certificate.');
@@ -98,7 +98,7 @@ export const CitizenDocuments: React.FC = () => {
       link.remove();
       window.URL.revokeObjectURL(downloadUrl);
       toast.success('Certificate downloaded.');
-    } catch (err) {
+    } catch{
       toast.error('Could not generate PDF. Please contact the barangay hall.');
     } finally {
       setDownloadingId(null);
