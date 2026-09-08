@@ -50,18 +50,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _initializeAndLoad();
   }
 
-    Future<void> _initializeAndLoad() async {
+  Future<void> _initializeAndLoad() async {
     _dashboardService = widget.dashboardService;
     _authService = widget.authService;
 
-    // Initialize core services
     final storage = await StorageService.init();
-    final apiClient = ApiClient();
-    
-    // Ensure the token is attached so backend calls succeed after an app restart
+    final cachedUser = storage.getUser();
     final token = storage.getAccessToken();
+    final cookie = storage.getRefreshCookie();
+
+    // Instant Cache Render: Eliminate screen freeze by populating cached user immediately
+    if (cachedUser != null && mounted) {
+      setState(() {
+        _data = DashboardData(user: cachedUser);
+        _isLoading = false;
+      });
+    }
+
+    final apiClient = ApiClient();
     if (token != null) {
-      apiClient.setAuthCredentials(accessToken: token);
+      apiClient.setAuthCredentials(accessToken: token, cookieHeader: cookie);
     }
 
     if (_dashboardService == null || _authService == null) {
@@ -464,7 +472,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
     );
   }
-  
+
   void _showNotificationDetailModal(BuildContext context, NotificationItemModel item) {
     showModalBottomSheet(
       context: context,
