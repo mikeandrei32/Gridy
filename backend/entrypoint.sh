@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Running Database Migrations..."
-python manage.py migrate --noinput
+# Only execute migrations when launching the Daphne backend, not Celery workers
+if [[ "$*" == *"daphne"* ]] || [[ "$*" == *"runserver"* ]]; then
+    echo "Running Database Migrations..."
+    python manage.py migrate --noinput
+fi
 
-echo "Starting Django Server..."
-# Execute the main command passed from docker-compose
+echo "Starting Server: $@"
 exec "$@"
