@@ -14,10 +14,9 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from unicodedata import name
+
 from django.contrib import admin
 from django.urls import path, include
-from gridy_services.views import health_check
 
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -33,7 +32,7 @@ urlpatterns = [
     path('api/v1/', include('gridy_services.urls')),
     path('api/v1/', include('gridy_reports.urls')),
     path('api/v1/', include('gridy_communications.urls')),
-    path('api/v1/health/', health_check, name='health_check'),
+    path('api/v1/health/', HealthCheckView.as_view(), name='health_check'),
 
     # OpenAPI Schema Views
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
