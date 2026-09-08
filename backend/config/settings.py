@@ -168,6 +168,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
+    'http://localhost',
+    'http://127.0.0.1',
     'http://localhost:3000', 
     'http://127.0.0.1:3000',
     'http://localhost:5173',
