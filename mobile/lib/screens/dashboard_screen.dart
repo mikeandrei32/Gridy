@@ -50,18 +50,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _initializeAndLoad();
   }
 
-    Future<void> _initializeAndLoad() async {
+  Future<void> _initializeAndLoad() async {
     _dashboardService = widget.dashboardService;
     _authService = widget.authService;
 
-    // Initialize core services
     final storage = await StorageService.init();
-    final apiClient = ApiClient();
-    
-    // Ensure the token is attached so backend calls succeed after an app restart
+    final cachedUser = storage.getUser();
     final token = storage.getAccessToken();
+    final cookie = storage.getRefreshCookie();
+
+    // Instant Cache Render: Eliminate screen freeze by populating cached user immediately
+    if (cachedUser != null && mounted) {
+      setState(() {
+        _data = DashboardData(user: cachedUser);
+        _isLoading = false;
+      });
+    }
+
+    final apiClient = ApiClient();
     if (token != null) {
-      apiClient.setAuthCredentials(accessToken: token);
+      apiClient.setAuthCredentials(accessToken: token, cookieHeader: cookie);
     }
 
     if (_dashboardService == null || _authService == null) {
@@ -236,15 +244,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 24),
 
-                    // 3. Recent Notifications Section
-                    RecentNotificationsSection(
-                      notifications: _data.notifications,
-                      onViewAll: () => _showNotificationModalSheet(context),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // 4. Quick Services Action Cards
+                    // 3. Quick Services Action Cards (MOVED UP FOR FAST EMERGENCY & HOTLINE ACCESS)
                     QuickServicesSection(
                       onRequestDocument: () {
                         Navigator.of(context).push(
@@ -260,10 +260,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                       onBarangayHotline: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => HotlinesScreen(),
-                          ),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const HotlinesScreen()),
                         );
                       },
                       onMyReports: () {
@@ -272,6 +271,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           MaterialPageRoute(builder: (_) => const MyIssuesScreen()),
                         );
                       },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // 4. Recent Notifications Section (WIRED ONNOTIFICATIONTAP)
+                    RecentNotificationsSection(
+                      notifications: _data.notifications,
+                      onViewAll: () => _showNotificationModalSheet(context),
+                      onNotificationTap: (item) => _showNotificationDetailModal(context, item),
                     ),
 
                     const SizedBox(height: 24),
@@ -461,6 +468,119 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showNotificationDetailModal(BuildContext context, NotificationItemModel item) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_rounded,
+                      color: AppColors.primaryNavy,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          item.formattedSubtitle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  'Advisory Category: ${item.category}\n\nOfficial notice regarding "${item.title}". Check your document requests or community bulletin for real-time status updates.',
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.textPrimary,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryNavy,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Dismiss',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

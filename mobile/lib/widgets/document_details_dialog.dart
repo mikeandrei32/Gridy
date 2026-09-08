@@ -165,6 +165,29 @@ class _DocumentDetailsDialogState extends State<DocumentDetailsDialog> {
             label: 'Submission Date',
             value: req.formattedRequestedDate,
           ),
+          
+          if (req.orNumber != null && req.orNumber!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _DetailRow(
+              label: 'Official Receipt (O.R.)',
+              value: req.orNumber!,
+            ),
+          ],
+          if (req.formattedFee != null) ...[
+            const SizedBox(height: 12),
+            _DetailRow(
+              label: 'Assessment Fee',
+              value: req.formattedFee!,
+              valueColor: const Color(0xFF0F766E),
+            ),
+          ],
+          if (req.isWalkin) ...[
+            const SizedBox(height: 12),
+            const _DetailRow(
+              label: 'Filing Channel',
+              value: 'Barangay Hall Walk-In',
+            ),
+          ],
 
           if (req.adminNotes != null && req.adminNotes!.isNotEmpty) ...[
             const SizedBox(height: 16),

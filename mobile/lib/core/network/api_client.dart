@@ -37,6 +37,35 @@ class ApiClient {
     _cookieHeader = null;
   }
 
+  /// Performs a silent token refresh using the stored refresh cookie
+  Future<bool> refreshAccessToken() async {
+    try {
+      if (_cookieHeader == null || _cookieHeader!.isEmpty) return false;
+
+      final response = await _client.post(
+        _buildUri(AppConfig.tokenRefreshEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Cookie': _cookieHeader!,
+        },
+      );
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final Map<String, dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+        final newAccess = data['access'] as String?;
+        final newCookie = extractSetCookie(response) ?? _cookieHeader;
+
+        if (newAccess != null) {
+          setAuthCredentials(accessToken: newAccess, cookieHeader: newCookie);
+          return true;
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
   /// Extracts the `refresh_token` or cookie string from response headers
   String? extractSetCookie(http.Response response) {
     final rawCookie = response.headers['set-cookie'];
@@ -206,6 +235,16 @@ class ApiClient {
         return response;
       }
 
+      // Automatic silent retry on 401 Unauthorized if refresh cookie is present
+      if (response.statusCode == 401 && _cookieHeader != null && _cookieHeader!.isNotEmpty) {
+        final refreshed = await refreshAccessToken();
+        if (refreshed) {
+          final retriedResponse = await requestFn().timeout(AppConfig.requestTimeout);
+          if (retriedResponse.statusCode >= 200 && retriedResponse.statusCode < 300) {
+            return retriedResponse;
+          }
+        }
+      }
       // Handle HTTP error statuses
       _handleHttpError(response);
       return response;

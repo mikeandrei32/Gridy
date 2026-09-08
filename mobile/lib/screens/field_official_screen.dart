@@ -498,6 +498,27 @@ class _FieldOfficialScreenState extends State<FieldOfficialScreen> with SingleTi
             'Requested Date: ${doc.formattedRequestedDate}',
             style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
+          if (doc.orNumber != null && doc.orNumber!.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Official Receipt: ${doc.orNumber}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F766E)),
+            ),
+          ],
+          if (doc.formattedFee != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Treasury Fee: ${doc.formattedFee}',
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+            ),
+          ],
+          if (doc.isWalkin) ...[
+            const SizedBox(height: 4),
+            const Text(
+              'Origin: Front Desk Walk-In',
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w500, color: Color(0xFF64748B)),
+            ),
+          ],
         ],
       ),
     );

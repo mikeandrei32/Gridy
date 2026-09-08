@@ -14,8 +14,8 @@ import '../widgets/recent_completions_section.dart';
 import '../widgets/user_ticket_card.dart';
 import 'dashboard_screen.dart';
 import 'documents_screen.dart';
-import 'login_screen.dart';
 import 'schedule_screen.dart';
+import 'profile_screen.dart';
 
 /// Screen presenting the live queue status matching the exact reference UI
 class QueueScreen extends StatefulWidget {
@@ -227,84 +227,16 @@ class _QueueScreenState extends State<QueueScreen> {
     }
   }
 
-  void _showProfileModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  void _navigateToProfile() {
+    if (_currentUser == null || _authService == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          user: _currentUser!,
+          authService: _authService!,
+        ),
       ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 48,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: const Color(0xFFE2E8F0),
-                child: Text(
-                  _currentUser != null && _currentUser!.fullName.isNotEmpty
-                      ? _currentUser!.fullName[0].toUpperCase()
-                      : 'R',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                _currentUser?.fullName ?? 'Resident',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                _currentUser?.email ?? '',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              const SizedBox(height: 24),
-              ListTile(
-                leading: const Icon(Icons.logout_rounded, color: AppColors.error),
-                title: const Text(
-                  'Log Out',
-                  style: TextStyle(
-                    color: AppColors.error,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                onTap: () async {
-                  final navigator = Navigator.of(context);
-                  Navigator.pop(ctx);
-                  await _authService?.logout();
-                  if (!mounted) return;
-                  navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -353,7 +285,7 @@ class _QueueScreenState extends State<QueueScreen> {
 
                 // Right Profile Avatar Circle
                 GestureDetector(
-                  onTap: () => _showProfileModal(context),
+                  onTap: _navigateToProfile,
                   child: Container(
                     width: 40,
                     height: 40,
