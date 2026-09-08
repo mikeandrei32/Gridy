@@ -94,5 +94,31 @@ void main() {
       expect(json['status'], 'PROCESSING');
       expect(json['admin_notes'], 'In review');
     });
+        test('parses treasury assessment or_number, fee_amount, and is_walkin correctly', () {
+      final json = {
+        'id': 501,
+        'document_type': 'Barangay Clearance',
+        'urgency_tag': 'REGULAR',
+        'status': 'RELEASED',
+        'or_number': 'OR-2026-9901',
+        'fee_amount': 50.0,
+        'is_walkin': true,
+        'created_at': '2026-09-06T14:00:00Z',
+      };
+
+      final model = DocumentRequestModel.fromJson(json);
+
+      expect(model.id, 501);
+      expect(model.orNumber, 'OR-2026-9901');
+      expect(model.feeAmount, 50.0);
+      expect(model.formattedFee, '₱50.00');
+      expect(model.isWalkin, isTrue);
+      expect(model.isReleased, isTrue);
+
+      final serialized = model.toJson();
+      expect(serialized['or_number'], 'OR-2026-9901');
+      expect(serialized['fee_amount'], 50.0);
+      expect(serialized['is_walkin'], isTrue);
+    });
   });
 }
