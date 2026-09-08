@@ -14,8 +14,8 @@ import '../widgets/custom_bottom_nav.dart';
 import '../widgets/schedule_event_card.dart';
 import 'dashboard_screen.dart';
 import 'documents_screen.dart';
-import 'login_screen.dart';
 import 'queue_screen.dart';
+import 'profile_screen.dart';
 
 /// Community & Appointments Schedule Screen matching the exact reference UI
 class ScheduleScreen extends StatefulWidget {
@@ -87,88 +87,17 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     }
   }
 
-  void _showProfileModal(BuildContext context) {
+  void _navigateToProfile() {
     final user = _data.user;
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    if (user == null || _authService == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          user: user,
+          authService: _authService!,
+        ),
       ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE2E8F0),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: const Color(0xFFCBD5E1),
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    user != null && user.fullName.isNotEmpty
-                        ? user.fullName[0].toUpperCase()
-                        : (user != null && user.username.isNotEmpty
-                            ? user.username[0].toUpperCase()
-                            : 'C'),
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.primaryNavy,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                user?.fullName ?? user?.username ?? 'Resident',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                user?.email ?? '',
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  color: AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(height: 24),
-              ListTile(
-                leading: const Icon(Icons.logout_rounded, color: Color(0xFFEF4444)),
-                title: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFEF4444),
-                  ),
-                ),
-                onTap: () async {
-                  final navigator = Navigator.of(context);
-                  Navigator.pop(ctx);
-                  await _authService?.logout();
-                  if (!mounted) return;
-                  navigator.pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (route) => false,
-                  );
-                },
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -353,7 +282,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
 
                 // Right Profile Avatar Circle
                 GestureDetector(
-                  onTap: () => _showProfileModal(context),
+                  onTap: _navigateToProfile,
                   child: Container(
                     width: 40,
                     height: 40,
