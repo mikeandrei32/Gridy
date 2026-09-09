@@ -41,7 +41,6 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'cloudinary_storage',
     'django.contrib.staticfiles',
-    'channels',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
@@ -100,15 +98,6 @@ ASGI_APPLICATION = 'config.asgi.application'
 import sys
 
 # Configure the Redis Channel Layer (Point to the existing gridy_redis container)
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            # We use db=1 to keep it separate from our Celery broker (which uses db=0)
-            "hosts": [("redis", 6379)],
-        },
-    },
-}
 
 if 'test' in sys.argv or 'pytest' in sys.modules:
     CHANNEL_LAYERS = {
@@ -260,22 +249,6 @@ else:
     print("Warning: Firebase service account JSON key not found. FCM notifications are disabled.")
 
 
-# Celery and Redis Configuration
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = TIME_ZONE
-
-# Dynamically enable Eager Mode when running tests
-import sys
-if 'test' in sys.argv or 'pytest' in sys.modules:
-    CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_EAGER_PROPAGATES = True
-
-
-
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Gridy API',
     'DESCRIPTION': 'Barangay Information and Service Management System API',
@@ -284,21 +257,12 @@ SPECTACULAR_SETTINGS = {
     'SERVE_PERMISSIOMNS': ['gridy_auth.permissions.IsBarangayOfficial'],
 }
 
-# Cache Settings (Redis backend in dev/prod, LocMemCache in tests)
-if 'test' in sys.argv or 'pytest' in sys.modules:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        }
+# Cache Settings (In-memory cache for session and throttling management)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': env('REDIS_URL', default='redis://127.0.0.1:6379/1'),
-        }
-    }
-
+}
 
 # Structured JSON Logging Configuration
 LOGGING = {
@@ -343,34 +307,14 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
 
-
 import sys
 
-# Testing Overrides (Bypass NeonDB, Redis, Celery, and SMTP locally)
+# Testing Overrides (Bypass NeonDB and real SMTP locally)
 if 'test' in sys.argv or 'pytest' in sys.modules:
-    # 1. Force local SQLite db for fast tests
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': ':memory:',
         }
     }
-
-    # 2. Completely disable Redis and Celery Backends
-    CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_STORE_EAGER_RESULT = False
-    CELERY_BROKER_URL= 'memory://'
-    CELERY_RESULT_BACKEND= None
-
-    # 3. Disable real emails and WebSockets
     EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        }
-    }
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
-        }
-    }

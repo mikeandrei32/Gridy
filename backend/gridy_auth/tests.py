@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from gridy_auth.models import User, Resident, Barangay
+from django.core.management import call_command
 
 # Create your tests here.
 
@@ -333,3 +334,11 @@ class AuthAPITests(APITestCase):
         
         # 5. Verify the user is actually deleted from the database
         self.assertEqual(User.objects.filter(username="dummy_pending").count(), 0)
+
+class SeedBarangaysCommandTests(TestCase):
+    def test_seed_barangays_executes_successfully(self):
+        call_command('seed_barangays')
+        self.assertTrue(Barangay.objects.filter(name="Barangay Ibabang Dupay").exists())
+        self.assertTrue(Barangay.objects.filter(name="Barangay Daungan").exists())
+        self.assertTrue(User.objects.filter(username="admin_dupay").exists())
+        self.assertTrue(User.objects.filter(username="admin_daungan").exists())

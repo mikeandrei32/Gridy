@@ -7,8 +7,6 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
 from gridy_auth.models import User
 from gridy_auth.permissions import IsBarangayOfficial, IsBarangayOfficialOrField
@@ -19,17 +17,6 @@ from gridy_communications.tasks import send_notification_to_user_task
 from gridy_audit.services import log_action
 from gridy_audit.models import AuditLog
 from rest_framework.exceptions import PermissionDenied
-
-def broadcast_queue_update():
-    """Helper to notify all connected WebSockets that the queue has changed."""
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        'queue_updates',
-        {
-            'type': 'queue_message',
-            'message': 'UPDATE'
-        }
-    )
 
 class QueueTicketViewSet(viewsets.ModelViewSet):
     serializer_class = QueueTicketSerializer
@@ -68,7 +55,6 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save()
-        broadcast_queue_update()
 
     @action(detail=False, methods=['get'], url_path='live-status')
     def live_status(self, request):
@@ -121,7 +107,6 @@ class QueueTicketViewSet(viewsets.ModelViewSet):
                 barangay=request.user.barangay, 
                 status=QueueTicket.Status.WAITING
             ).count()
-            broadcast_queue_update()
 
             return Response({
                 "current_ticket": next_ticket.ticket_number,
