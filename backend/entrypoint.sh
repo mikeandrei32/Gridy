@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Only execute migrations when launching the Daphne backend, not Celery workers
-if [[ "$*" == *"daphne"* ]] || [[ "$*" == *"runserver"* ]]; then
+# Run database migrations on container launch
+if [[ "$*" == *"runserver"* ]] || [[ "$*" == *"gunicorn"* ]]; then
     echo "Running Database Migrations..."
     python manage.py migrate --noinput
 fi
