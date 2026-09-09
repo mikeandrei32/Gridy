@@ -10,7 +10,6 @@ class Barangay(models.Model):
     city_seal = models.ImageField(upload_to='barangay_logos/', blank=True, null=True)
     captain_name = models.CharField(max_length=255, blank=True, null=True, help_text="Full name of the incumbent Punong Barangay")
     office_contact = models.CharField(max_length=255, blank=True, null=True, help_text="Office Address or Phone Number")
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name

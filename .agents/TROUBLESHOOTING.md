@@ -76,25 +76,24 @@ docker compose exec backend python manage.py migrate
 
 ---
 
-## 4. Celery Worker Stalls & Redis Drops
+## 4. Background Task (FCM & Email) Debugging
 
 ### Symptoms
-* Push notifications (FCM) or audit tasks are queued but never dispatched.
-* Celery logs report connection refusal or broker timeout.
+* Push notifications (FCM) or welcome emails are not arriving.
+* Client request returns 200 OK, but background dispatch failed.
 
 ### Root Cause
-Redis message broker dropped or Celery worker process died following a fatal task exception.
+* Celery and Redis have been decommissioned in favor of native Python daemon threads (`@async_task`).
+* If a background thread fails, the error is caught defensively and logged via Python `logging` without crashing the main HTTP response thread.
+* Most common cause: Missing or invalid Firebase service account key (`FIREBASE_SERVICE_ACCOUNT_JSON_PATH`) or invalid SMTP email credentials.
 
 ### Remediation
 ```bash
-# 1. Check container health
-docker compose ps redis celery_worker
+# 1. Check application logs for background thread error traces
+docker compose logs -f backend | grep -E "(Failed to send welcome email|Background Task Failed)"
 
-# 2. Restart Celery worker and Redis
-docker compose restart redis celery_worker
-
-# 3. View live Celery worker task processing logs
-docker compose logs -f celery_worker
+# 2. Verify Firebase credentials exist in .env
+cat backend/.env | grep FIREBASE_SERVICE_ACCOUNT_JSON_PATH
 ```
 
 ---

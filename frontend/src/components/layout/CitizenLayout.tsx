@@ -21,7 +21,7 @@ export const CitizenLayout: React.FC = () => {
     };
 
     const displayName = user?.full_name || user?.username || 'Resident';
-    const barangayName = user?.barangay?.name || 'Barangay Central';
+    const barangayName = user?.barangay?.name || 'Barangay Ibabang Dupay';
 
     const navLinkClass = ({ isActive }: { isActive: boolean }) =>
         `flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${

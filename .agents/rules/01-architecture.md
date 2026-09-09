@@ -24,7 +24,7 @@ These guidelines apply across the entire Gridy ecosystem to ensure enterprise-gr
 ### 4. System Health & Observability (Health Monitoring)
 
 - **Rule**: The system must expose structured monitoring and heartbeat metrics endpoints.
-- **Practice**: Provide a `/api/health/` monitoring route checking database access, Celery broker status, and Redis cache latency. Format application logs to structured JSON streams.
+- **Practice**: Provide an `/api/v1/health/` monitoring route checking PostgreSQL query latency and local cache responsiveness. Format application logs to structured JSON streams.
 
 ### 5. Environment Variable Safety
 

@@ -1,24 +1,23 @@
 # Gridy - Operational Playbooks & Engineering Commands
 
-This document contains standard commands, development workflows, and operational playbooks across the Gridy ecosystem (Django, React, Flutter, Celery, Redis, and PostgreSQL).
+This document contains standard commands, development workflows, and operational playbooks across the Gridy ecosystem (Django, React, Flutter, and PostgreSQL).
 
 ---
 
 ## 1. Development Workflows
 
 ### Option A: The Hybrid Local Workflow (Recommended)
-Infrastructure runs inside Docker; application code runs directly on the host machine for optimal hot-reloading and debugging.
+Database runs inside Docker; application code runs directly on the host machine for optimal hot-reloading and debugging.
 
-1. **Start Core Infrastructure (PostgreSQL, Redis, Celery):**
+1. **Start Core Database (PostgreSQL):**
    ```bash
-   docker compose up -d db redis celery_worker
+   docker compose up -d db
    ```
    *(Explicitly leaves `backend` and `frontend` offline so local host ports 8000 and 5173 remain free).*
 
 2. **Start Django REST Backend:**
    ```bash
-   cd backend
-   python manage.py runserver
+   ./venv/bin/python backend/manage.py runserver
    ```
 
 3. **Start React Vite Frontend:**
@@ -30,7 +29,7 @@ Infrastructure runs inside Docker; application code runs directly on the host ma
 ---
 
 ### Option B: The Full Docker Workflow
-Runs all services completely containerized inside Docker Compose.
+Runs the complete 3-tier application stack containerized inside Docker Compose.
 
 1. **Start Entire Application Stack:**
    ```bash
@@ -38,7 +37,6 @@ Runs all services completely containerized inside Docker Compose.
    ```
 
 2. **Restarting Backend on Code Changes:**
-   *(Daphne inside Docker does not auto-reload host volume edits automatically):*
    ```bash
    docker compose restart backend
    ```
@@ -61,12 +59,13 @@ Runs all services completely containerized inside Docker Compose.
   ```
 
 ### Database Seeding
-Always seed through schema-validated JSON fixtures and management scripts. Never execute raw SQL inserts.
+Always seed through schema-validated management scripts. Never execute raw SQL inserts.
 ```bash
-cd backend
-python manage.py seed_db
-# Or load user fixture directly
-python manage.py loaddata gridy_auth/fixtures/seed_users.json
+# Seed approved partner barangays (Ibabang Dupay & Daungan) with authentic services and users:
+./venv/bin/python backend/manage.py seed_barangays
+
+# Or inside running Docker container:
+docker compose exec backend python manage.py seed_barangays
 ```
 
 ### Superuser Creation

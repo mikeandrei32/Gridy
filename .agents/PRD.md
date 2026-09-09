@@ -32,5 +32,5 @@
 
 ## 4. Non-Functional Requirements
 - **Security**: Data isolation per user. Admins cannot alter resident creation states maliciously.
-- **Reliability**: Asynchronous tasks (via Celery/Redis) for push notifications and heavy PDF generation.
+- **Reliability**: Non-blocking asynchronous task execution via native Python daemon threads (`@async_task`) for push notifications and email dispatch.
 - **Accessibility**: High-contrast, responsive UI tailored for mobile devices and varying internet speeds.
