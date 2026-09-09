@@ -140,7 +140,7 @@ Per **ADR 002 (HttpOnly Cookie Authentication)**, refresh tokens are never retur
     ```
 
 #### POST `/api/v1/queue/next/`
-*   **Description:** Advances the queue. Marks the currently serving ticket in the official's barangay as `COMPLETED`, transitions the next waiting ticket to `SERVING`, and broadcasts a WebSocket update (Barangay Official only).
+*   **Description:** Advances the queue. Marks the currently serving ticket in the official's barangay as `COMPLETED` and transitions the next waiting ticket to `SERVING` for synchronized interval polling clients (Barangay Official only).
 *   **Response (200 OK):**
     ```json
     {
@@ -211,24 +211,22 @@ Per **ADR 002 (HttpOnly Cookie Authentication)**, refresh tokens are never retur
 ---
 
 ### 2.5 System Health & Observability
-
-#### GET `/api/health/`
-*   **Description:** System heartbeat and multi-service dependency health probe per ADR 001. Checks PostgreSQL connection, Redis latency, and Celery worker connectivity.
+ 
+#### GET `/api/v1/health/`
+*   **Description:** System heartbeat and dependency health probe per ADR 009. Checks PostgreSQL connection latency and local in-memory cache responsiveness without external broker dependencies.
 *   **Response (200 OK):**
     ```json
     {
       "status": "healthy",
+      "timestamp": "2026-09-09T14:48:48.659073+00:00",
       "services": {
         "database": {
           "status": "healthy",
-          "latency_ms": 2.4
+          "latency_ms": 11.19
         },
         "cache": {
           "status": "healthy",
-          "latency_ms": 0.8
-        },
-        "celery": {
-          "status": "healthy"
+          "latency_ms": 0.36
         }
       }
     }

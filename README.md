@@ -6,14 +6,15 @@ Gridy is an enterprise-grade web and mobile platform designed to modernize and d
 
 Gridy employs a highly decoupled, microservices-inspired architecture designed to scale. The entire ecosystem is containerized to guarantee 100% environment parity between local development and production.
 
-- **Backend Engine (Django & DRF):** Powers the core REST API (Python 3.12). Handles complex relational business logic, OpenAPI schema generation, and JWT validation.
-- **Frontend Web Admin (React & Vite):** A Single Page Application (SPA) providing a responsive, Tailwind-styled dashboard for Barangay Officials and DILG Superadmins.
-- **Resident Portal (Flutter):** A cross-platform mobile application allowing residents to report issues with image uploads, request documents, and view community schedules on the go.
-- **Primary Database (PostgreSQL 15):** Serves as the robust, ACID-compliant relational data store, heavily optimized with composite indices for rapid dashboard filtering.
-- **Message Broker & Cache (Redis 7):** Brokers background task queues and acts as an ultra-low-latency caching layer for session management.
-- **Asynchronous Task Queue (Celery):** Offloads heavy operations (like third-party Firebase network requests) from the main Django HTTP thread to background workers, ensuring zero UI blocking.
-- **Reverse Proxy & Static Hosting (Nginx):** Acts as the primary web server, serving the compiled React frontend as static assets while efficiently proxying dynamic API requests to Gunicorn.
-- **Cloud CDNs:** Leverages **Cloudinary** for scalable, ephemeral media storage (e.g., incident report photos) and **Firebase Cloud Messaging** for push notifications.
+- **Backend Engine (Django & DRF):** Powers the core REST API (Python 3.12, Django 6.0). Handles complex relational business logic, OpenAPI schema generation, and JWT validation.
+- **Frontend Web Admin & Citizen Portal (React & Vite):** Single Page Applications providing responsive Tailwind-styled interfaces for Barangay Officials and resident self-service kiosks.
+- **Resident Portal (Flutter):** Cross-platform mobile application allowing residents to report issues with image uploads, request documents, and view community schedules on the go.
+- **Primary Database (PostgreSQL 15):** Serves as the robust, ACID-compliant relational data store, optimized with composite indices for rapid dashboard filtering.
+- **Asynchronous Task Architecture:** Offloads non-blocking operations (such as Firebase Cloud Messaging push alerts and welcome emails) using native Python daemon threads (`@async_task`), ensuring zero UI blocking with zero message broker overhead.
+- **Real-Time Queue Synchronization:** Employs lightweight HTTP interval polling across web and mobile clients for synchronized lobby queue updates.
+- **Reverse Proxy & Static Hosting (Nginx):** Acts as the primary web server, serving the compiled React frontend as static assets while efficiently proxying dynamic API requests.
+- **Cloud Media Storage (Cloudinary):** Scalable cloud storage for incident report photo attachments.
+- **Approved Partner Beneficiaries:** Pre-seeded and customized specifically for **Barangay Ibabang Dupay (Lucena City)** and **Barangay Daungan (Pagbilao, Quezon)**.
 
 ## Core Features
 
