@@ -33,4 +33,5 @@ scratch/
 
 # Issue reports and temporary upload artifacts
 issue_reports/
-backend/issue_reports/
+backend/issue_reports/staticfiles/
+backend/staticfiles/

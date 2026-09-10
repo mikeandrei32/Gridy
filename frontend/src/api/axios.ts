@@ -38,7 +38,7 @@ axiosPrivate.interceptors.response.use(
             try {
                 // Attempt to refresh the token. We use a fresh axios instance to avoid looping
                 // but ensure `withCredentials` is true to send the HttpOnly refresh token cookie.
-                const response = await axios.post(`${BASE_URL}/token/refresh/`, {}, {
+                const response = await axios.post(`${BASE_URL}/auth/token/refresh/`, {}, {
                     withCredentials: true
                 });
 
