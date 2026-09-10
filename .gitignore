@@ -35,3 +35,4 @@ scratch/
 issue_reports/
 backend/issue_reports/staticfiles/
 backend/staticfiles/
+.vscode/
