@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { axiosPublic } from '../../api/axios';
-import { Shield, FileCheck2, Clock, Users, KeyRound, Sparkles } from 'lucide-react';
+import { Shield, FileCheck2, Clock, Users, KeyRound } from 'lucide-react';
 
 export const Login: React.FC = () => {
     const [username, setUsername] = useState('');
@@ -13,18 +13,6 @@ export const Login: React.FC = () => {
 
     const { login } = useAuth();
     const navigate = useNavigate();
-
-    // Secret shortcut: Shift + \ toggles between Citizen and Admin mode
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.shiftKey && (e.key === '|' || e.key === '\\')) {
-                e.preventDefault();
-                setIsAdminMode((prev) => !prev);
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
 
     const handleLogin = async (e: React.SubmitEvent<HTMLElement>) => {
         e.preventDefault();
@@ -78,7 +66,7 @@ export const Login: React.FC = () => {
         <div className="min-h-screen flex flex-col md:flex-row bg-[#F6F8FC] font-sans">
             {/* Left Sidebar Banner */}
             <div
-                className={`md:w-5/12 lg:w-[40%] text-white p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden min-h-[340px] md:min-h-screen transition-all duration-500 ${
+                className={`w-full md:w-5/12 lg:w-[40%] text-white p-5 md:p-8 lg:p-14 flex flex-col justify-between relative overflow-hidden md:min-h-screen transition-all duration-500 ${
                     isAdminMode
                         ? 'bg-gradient-to-b from-[#091B35] via-[#0F2D59] to-[#001128]'
                         : 'bg-gradient-to-b from-[#0284C7] via-[#0369A1] to-[#075985]'
@@ -93,22 +81,31 @@ export const Login: React.FC = () => {
                     </svg>
                 </div>
 
-                {/* Top Logo & Status Tag */}
+                {/* Top Logo & Interactive Touch Mode Badge */}
                 <div className="relative z-10 flex items-center justify-between">
                     <span className="font-black text-2xl tracking-wider text-white uppercase">
                         GRIDY
                     </span>
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                        isAdminMode
-                            ? 'bg-amber-400 text-slate-900 shadow-sm'
-                            : 'bg-white/20 text-white'
-                    }`}>
-                        {isAdminMode ? 'Official Authority' : 'Citizen Portal'}
-                    </span>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setError('');
+                            setIsAdminMode((prev) => !prev);
+                        }}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider cursor-pointer flex items-center gap-1.5 transition-all active:scale-95 select-none ${
+                            isAdminMode
+                                ? 'bg-amber-400 text-slate-900 shadow-sm hover:bg-amber-300'
+                                : 'bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm'
+                        }`}
+                        title="Tap to switch between Citizen and Official mode"
+                    >
+                        <span>{isAdminMode ? 'Official Authority' : 'Citizen Portal'}</span>
+                        <span className="text-[11px] opacity-75 font-bold">⇄</span>
+                    </button>
                 </div>
 
-                {/* Middle Main Content */}
-                <div className="relative z-10 my-auto py-8">
+                {/* Middle Main Content (Hidden on mobile, visible on tablet/desktop) */}
+                <div className="relative z-10 my-auto py-8 hidden md:block">
                     <h1 className="text-4xl lg:text-[2.75rem] font-extrabold text-white tracking-tight leading-[1.15] mb-4">
                         {isAdminMode ? (
                             <>
@@ -181,16 +178,10 @@ export const Login: React.FC = () => {
                         )}
                     </div>
                 </div>
-
-                {/* Bottom Hint */}
-                <div className="relative z-10 text-xs text-blue-100/60 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white">Shift</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-white">\</kbd> to switch mode</span>
-                </div>
             </div>
 
             {/* Right Login Section */}
-            <div className="md:w-7/12 lg:w-[60%] flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16">
+            <div className="w-full md:w-7/12 lg:w-[60%] flex flex-col justify-center items-center px-6 py-8 sm:p-12 lg:p-16">
                 <div className="w-full max-w-md">
                     {/* Welcome Header */}
                     <div className="mb-8">
@@ -294,6 +285,24 @@ export const Login: React.FC = () => {
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                                     </svg>
+                                )}
+                            </button>
+                        </div>
+                        
+                        {/* Mobile-Friendly Mode Switch Link */}
+                        <div className="text-center pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setError('');
+                                    setIsAdminMode((prev) => !prev);
+                                }}
+                                className="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                            >
+                                {isAdminMode ? (
+                                    <span>Resident Citizen? <span className="text-[#0284C7] font-bold underline">Switch to Citizen Portal</span></span>
+                                ) : (
+                                    <span>Barangay Official? <span className="text-slate-900 font-bold underline">Switch to Staff Sign In</span></span>
                                 )}
                             </button>
                         </div>
