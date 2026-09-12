@@ -31,6 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _contactNumberController = TextEditingController();
   DateTime? _birthDate;
+  int? _selectedBarangayId;
   bool _voterStatus = false;
   bool _requiresGuardian = false;
   late TextEditingController _guardianController;
@@ -117,6 +118,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ? "${_birthDate!.year}-${_birthDate!.month.toString().padLeft(2, '0')}-${_birthDate!.day.toString().padLeft(2, '0')}" 
           : "2000-01-01", 
         voterStatus: _voterStatus,
+        barangayId: _selectedBarangayId, // <-- Add this
         contactNumber: _contactNumberController.text,
         guardianId: _requiresGuardian ? _guardianController.text.trim() : null,
       );
@@ -334,8 +336,97 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             return null;
                           },
                         ),
-
+                        
                         const SizedBox(height: 18),
+
+                        // Local Barangay Jurisdiction Dropdown
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'LOCAL BARANGAY JURISDICTION',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textLabel,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.inputBackground,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: DropdownButtonFormField<int>(
+                                initialValue: _selectedBarangayId,
+                                isExpanded: true,
+                                icon: const Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  color: AppColors.textMuted,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  errorBorder: InputBorder.none,
+                                  focusedErrorBorder: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  prefixIcon: Icon(
+                                    Icons.location_on_outlined,
+                                    color: AppColors.textMuted,
+                                    size: 20,
+                                  ),
+                                ),
+                                hint: const Text(
+                                  'Select your Barangay',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.textHint,
+                                  ),
+                                ),
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: 2,
+                                    child: Text(
+                                      'Barangay Ibabang Dupay (Lucena City)',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 3,
+                                    child: Text(
+                                      'Barangay Daungan (Pagbilao, Quezon)',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _isLoading
+                                    ? null
+                                    : (value) {
+                                        setState(() {
+                                          _selectedBarangayId = value;
+                                        });
+                                      },
+                                validator: (value) {
+                                  if (value == null) {
+                                    return 'Please select your barangay';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
 
                         // Barangay ID / Username Input
                         CustomTextField(
@@ -449,16 +540,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           },
                         ),
 
-                        const SizedBox(height: 28),
-
-                        // Register Account Action Button
-                        CustomButton(
-                          text: 'Register Account',
-                          isLoading: _isLoading,
-                          icon: Icons.arrow_forward_rounded,
-                          onPressed: _handleRegister,
-                        ),
-
                         const SizedBox(height: 24),
 
                         CustomTextField(
@@ -542,6 +623,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 24),
                         
+
+                        // Register Account Action Button
+                        CustomButton(
+                          text: 'Register Account',
+                          isLoading: _isLoading,
+                          icon: Icons.arrow_forward_rounded,
+                          onPressed: _handleRegister,
+                        ),
+
+                        const SizedBox(height: 28),
 
                         // Already have an account? Login here
                         Center(

@@ -102,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
           _errorMessage =
-              'Barangay Officials must use Official Authority Mode. Long-press the logo to switch.';
+              'Barangay Personnel must use Official Mode. Long-press the logo to switch.';
         });
         return;
       }
@@ -113,7 +113,19 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() {
           _isLoading = false;
           _errorMessage =
-              'Citizen accounts cannot access the Barangay Authority Command.';
+              'Citizen accounts cannot access the Barangay Personnel Portal.';
+        });
+        return;
+      }
+
+      // DILG Admin Guard: DILG oversight is exclusively accessed via the Web Executive Portal
+      if (authResponse.user.role.toUpperCase() == 'DILG_ADMIN') {
+        await _authService!.logout();
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              'DILG Oversight accounts must sign in through the Web Executive Portal.';
         });
         return;
       }
@@ -239,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 SnackBar(
                                   content: Text(
                                     _isOfficialMode
-                                        ? 'Barangay Official Authority Mode Activated'
+                                        ? 'Barangay Personnel Official Mode Activated'
                                         : 'Switched to Citizen Resident Portal',
                                     style: const TextStyle(fontWeight: FontWeight.w600),
                                   ),
@@ -277,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               child: const Text(
-                                'BARANGAY AUTHORITY ACCESS',
+                                'BARANGAY PERSONNEL ACCESS',
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,

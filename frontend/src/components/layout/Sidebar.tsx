@@ -44,11 +44,8 @@ export const Sidebar: React.FC = () => {
                         <img src={mainLogoSvg} alt="Gridy Logo" className="w-full h-full object-contain" />
                     </div>
                     <div className="flex flex-col justify-center">
-                        <span className="text-[19px] font-bold tracking-tight text-[#0f172a] leading-tight font-sans">
-                            Gridy
-                        </span>
                         <span className="text-[9px] font-bold tracking-[0.14em] text-[#64748b] uppercase leading-tight mt-0.5">
-                            BARANGAY AUTHORITY
+                            {user?.role === 'DILG_ADMIN' ? 'DILG OVERSIGHT' : 'BARANGAY AUTHORITY'}
                         </span>
                     </div>
                 </div>
@@ -56,50 +53,53 @@ export const Sidebar: React.FC = () => {
                 {/* Navigation Items */}
                 <nav className="px-3.5 py-2">
                     <ul className="space-y-1">
-                        {user?.role === 'DILG_ADMIN' && (
-                                <li>
-                                    <NavLink
-                                        to="/dilg-analytics"
-                                        className={({ isActive }) => `flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
-                                            isActive ? 'bg-[#E3EDFD] text-[#0047BA] font-bold shadow-xs' : 'text-[#475569] font-medium hover:bg-[#EEF3FA] hover:text-[#0f172a]'
-                                        }`}
-                                    >
-                                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                                            <Globe className="w-5 h-5 transition-colors duration-150 text-[#64748b] group-hover:text-[#0f172a]" />
-                                        </div>
-                                        <span>Global Analytics</span>
-                                    </NavLink>
-                                </li>
-                        )}
-                        {navItems.map((item) => {
-                            const isActive =
-                                location.pathname === item.path ||
-                                (item.path !== '/' && location.pathname.startsWith(item.path));
-                                
-                            const Icon = item.icon;
+                        {/* DILG Oversight View */}
+                        {user?.role === 'DILG_ADMIN' ? (
+                            <li>
+                                <NavLink
+                                    to="/dilg-analytics"
+                                    className={({ isActive }) => `flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
+                                        isActive ? 'bg-[#E3EDFD] text-[#0047BA] font-bold shadow-xs' : 'text-[#475569] font-medium hover:bg-[#EEF3FA] hover:text-[#0f172a]'
+                                    }`}
+                                >
+                                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                        <Globe className="w-5 h-5 transition-colors duration-150 text-[#0047BA]" />
+                                    </div>
+                                    <span>Global Analytics</span>
+                                </NavLink>
+                            </li>
+                        ) : (
+                            /* Local Barangay Authority Operational Desks */
+                            navItems.map((item) => {
+                                const isActive =
+                                    location.pathname === item.path ||
+                                    (item.path !== '/' && location.pathname.startsWith(item.path));
+                                    
+                                const Icon = item.icon;
 
-                            return (
-                                <li key={item.name}>
-                                    <NavLink
-                                        to={item.path}
-                                        className={`flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
-                                            isActive
-                                                ? 'bg-[#E3EDFD] text-[#0047BA] font-bold shadow-xs'
-                                                : 'text-[#475569] font-medium hover:bg-[#EEF3FA] hover:text-[#0f172a]'
-                                        }`}
-                                    >
-                                        <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                                            <Icon className={`w-5 h-5 transition-colors duration-150 ${
-                                                isActive 
-                                                    ? 'text-[#0047BA]' 
-                                                    : 'text-[#64748b] group-hover:text-[#0f172a]'
-                                            }`} />
-                                        </div>
-                                        <span>{item.name}</span>
-                                    </NavLink>
-                                </li>
-                            );
-                        })}
+                                return (
+                                    <li key={item.name}>
+                                        <NavLink
+                                            to={item.path}
+                                            className={`flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 group ${
+                                                isActive
+                                                    ? 'bg-[#E3EDFD] text-[#0047BA] font-bold shadow-xs'
+                                                    : 'text-[#475569] font-medium hover:bg-[#EEF3FA] hover:text-[#0f172a]'
+                                            }`}
+                                        >
+                                            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                                                <Icon className={`w-5 h-5 transition-colors duration-150 ${
+                                                    isActive 
+                                                        ? 'text-[#0047BA]' 
+                                                        : 'text-[#64748b] group-hover:text-[#0f172a]'
+                                                }`} />
+                                            </div>
+                                            <span>{item.name}</span>
+                                        </NavLink>
+                                    </li>
+                                );
+                            })
+                        )}
                     </ul>
                 </nav>
             </div>

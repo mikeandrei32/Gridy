@@ -100,44 +100,52 @@ export const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
+     useEffect(() => {
+        if (user?.role === 'DILG_ADMIN') {
+            navigate('/dilg-analytics', { replace: true });
+        }
+    }, [user, navigate]);
 
-    const fetchData = async () => {
-        try {
-            const [summaryRes, activitiesRes] = await Promise.allSettled([
-                axiosPrivate.get('/dashboard/summary/', { signal: controller.signal }),
-                axiosPrivate.get('/activities/', { signal: controller.signal })
-            ]);
-                    
-            if (isMounted) {
-                if (summaryRes.status === 'fulfilled') {
-                    setSummaryData(summaryRes.value.data);
-                }
-                if (activitiesRes.status === 'fulfilled') {
-                    const data = activitiesRes.value.data;
-                    setActivities(data.results || data || []);
-                }
-                setLoading(false);
-            }
-        } catch (err: any) {
-            if (err.name !== 'CanceledError') {
+    useEffect(() => {
+        if (user?.role === 'DILG_ADMIN') return;
+
+        let isMounted = true;
+        const controller = new AbortController();
+
+        const fetchData = async () => {
+            try {
+                const [summaryRes, activitiesRes] = await Promise.allSettled([
+                    axiosPrivate.get('/dashboard/summary/', { signal: controller.signal }),
+                    axiosPrivate.get('/activities/', { signal: controller.signal })
+                ]);
+                        
                 if (isMounted) {
-                    setError('Failed to fetch dashboard data.');
+                    if (summaryRes.status === 'fulfilled') {
+                        setSummaryData(summaryRes.value.data);
+                    }
+                    if (activitiesRes.status === 'fulfilled') {
+                        const data = activitiesRes.value.data;
+                        setActivities(data.results || data || []);
+                    }
                     setLoading(false);
                 }
+            } catch (err: any) {
+                if (err.name !== 'CanceledError') {
+                    if (isMounted) {
+                        setError('Failed to fetch dashboard data.');
+                        setLoading(false);
+                    }
+                }
             }
-        }
-    };
+        };
 
-    fetchData();
+        fetchData();
 
-    return () => {
-        isMounted = false;
-        controller.abort();
-    };
-    }, []);
+        return () => {
+            isMounted = false;
+            controller.abort();
+        };
+    }, [user?.role]);
 
     const purokData = summaryData?.demographics?.purok_distribution 
     ? Object.entries(summaryData.demographics.purok_distribution).map(([name, value]) => ({
@@ -163,6 +171,10 @@ export const Dashboard: React.FC = () => {
     { name: 'Other', count: summaryData.issue_reports.scenario_breakdown.other || 0 },
     ]
     : []
+
+    if (user?.role === 'DILG_ADMIN') {
+        return null;
+    }
 
     return (
         <div className="space-y-6">

@@ -78,6 +78,7 @@ class AuthService {
     required String password,
     required String birthDate,
     required bool voterStatus,
+    int? barangayId,
     String? contactNumber,
     String? guardianId,
   }) async {
@@ -90,13 +91,14 @@ class AuthService {
         'password': password,
         'birth_date': birthDate,
         'voter_status': voterStatus,
+        'barangay_id': ?barangayId,
         if (contactNumber != null && contactNumber.isNotEmpty)
           'contact_number': contactNumber.trim(),
         if (guardianId != null && guardianId.isNotEmpty) 'guardian_id': guardianId,
       },
       requiresAuth: false,
     );
-
+    
     final Map<String, dynamic> responseData = jsonDecode(
       utf8.decode(response.bodyBytes),
     );

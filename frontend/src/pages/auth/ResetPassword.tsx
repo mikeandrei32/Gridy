@@ -1,6 +1,6 @@
 import React, { useState} from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { axiosPrivate } from "../../api/axios";
+import { axiosPublic } from "../../api/axios";
 import { Shield, CheckCircle, AlertTriangle } from "lucide-react";
 
 export const ResetPassword = () => {
@@ -33,7 +33,7 @@ export const ResetPassword = () => {
 
         setStatus('loading')
         try {
-            await axiosPrivate.post('http://localhost:8000/api/v1/auth/password-reset/confirm/', {
+            await axiosPublic.post('/auth/password-reset/confirm/', {
                 new_password: password,
                 uidb64,
                 token

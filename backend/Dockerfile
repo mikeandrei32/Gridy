@@ -28,3 +28,6 @@ EXPOSE 8000
 
 # Set the entrypoint script
 ENTRYPOINT [ "./entrypoint.sh" ]
+
+# Default startup command for container execution
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]

@@ -138,6 +138,7 @@ void main() {
     // Test short password
     await tester.enterText(textFields.at(3), 'short');
     await tester.enterText(textFields.at(4), 'short');
+    await tester.ensureVisible(find.text('Register Account')); // <-- Add this
     await tester.tap(find.text('Register Account'));
     await tester.pumpAndSettle();
 
@@ -146,6 +147,7 @@ void main() {
     // Test password mismatch
     await tester.enterText(textFields.at(3), 'validpassword123');
     await tester.enterText(textFields.at(4), 'differentpassword456');
+    await tester.ensureVisible(find.text('Register Account')); // <-- Add this
     await tester.tap(find.text('Register Account'));
     await tester.pumpAndSettle();
 

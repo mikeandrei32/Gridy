@@ -128,7 +128,7 @@ export const CitizenLayout: React.FC = () => {
 
             {/* Footer */}
             <footer className="border-t border-slate-200 bg-white/60 py-4 text-center text-xs text-slate-500">
-                Republic of the Philippines • Barangay e-Governance Portal • Gridy Civic Cloud
+                Republic of the Philippines • Barangay Information and Service Management System • Gridy
             </footer>
         </div>
     );
