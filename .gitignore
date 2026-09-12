@@ -36,3 +36,9 @@ issue_reports/
 backend/issue_reports/staticfiles/
 backend/staticfiles/
 .vscode/
+
+# Test coverage and test caches
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
