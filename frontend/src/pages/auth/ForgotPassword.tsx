@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { axiosPrivate } from "../../api/axios";
+import { axiosPublic } from "../../api/axios";
 import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
 export const ForgotPassword = () => {
@@ -12,7 +12,7 @@ export const ForgotPassword = () => {
         setStatus('loading')
 
         try {
-            await axiosPrivate.post('http://localhost:8000/api/v1/auth/password-reset/', { email })
+            await axiosPublic.post('/auth/password-reset/', { email })
             setStatus('success')
         } catch {
             // We still show success even on error to prevent Email Enumeration attacks

@@ -42,6 +42,8 @@ export const Login: React.FC = () => {
                 login(access, userData);
                 if (userData?.role === 'RESIDENT') {
                     navigate('/portal/documents');
+                } else if (userData?.role === 'DILG_ADMIN') {
+                    navigate('/dilg-analytics');
                 } else {
                     navigate('/dashboard');
                 }
