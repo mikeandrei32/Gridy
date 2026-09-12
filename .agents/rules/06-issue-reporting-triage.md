@@ -68,4 +68,4 @@ stateDiagram-v2
 4. **Automated Notification & Non-Repudiation:**
    * When an official updates an incident's status:
      1. An `AuditLog` entry is recorded with previous and new status states.
-     2. Celery task `send_notification_to_user_task` triggers a real-time FCM push notification to the reporting resident's device.
+     2. Asynchronous daemon task `send_notification_to_user_task` triggers a real-time FCM push notification to the reporting resident's device via `@async_task`.
