@@ -17,9 +17,10 @@ backend/
 │   ├── urls.py                 # Global URL dispatcher routing to app APIs
 │   └── wsgi.py / asgi.py
 ├── gridy_auth/                 # Custom AbstractUser auth and RBAC JWT logic
+├── gridy_audit/                # Administrative audit trail and event logging
 ├── gridy_services/             # Document request pipelines and queue logic
 ├── gridy_reports/              # Issue reports, multipart handlers, Cloudinary bridges
-└── gridy_communications/        # Announcements and activity schedules
+└── gridy_communications/       # Announcements and activity schedules
 ```
 
 ---
@@ -41,6 +42,9 @@ from firebase_admin import credentials
 cred = credentials.Certificate(os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON'))
 firebase_admin.initialize_app(cred)
 ```
+
+### 3.3 Asynchronous Execution: Non-Blocking Daemon Threads (`@async_task`)
+In accordance with **ADR 009**, background operations (Firebase FCM push alerts and transactional welcome emails) are decoupled from the synchronous HTTP request-response cycle using in-process daemon threads via `@async_task`. This provides `.delay()` drop-in compatibility without Celery or Redis dependencies.
 
 ---
 
